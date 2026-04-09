@@ -12,6 +12,8 @@ export type FarmerStackParamList = {
   FarmerDashboard: undefined;
   FarmerProductsList: undefined;
   AddProduct: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 export type FarmerTabParamList = {
@@ -22,6 +24,8 @@ export type FarmerTabParamList = {
 export type MerchantStackParamList = {
   MerchantDashboard: undefined;
   MerchantOrdersList: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 export type MerchantTabParamList = {
@@ -32,6 +36,8 @@ export type MerchantTabParamList = {
 export type DeliveryStackParamList = {
   DeliveryDashboard: undefined;
   DeliveryAssignmentsList: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 export type DeliveryTabParamList = {
@@ -41,6 +47,8 @@ export type DeliveryTabParamList = {
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 export type AdminTabParamList = {

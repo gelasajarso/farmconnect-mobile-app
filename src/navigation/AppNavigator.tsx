@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +26,8 @@ import DeliveryAssignmentsScreen from '../screens/DeliveryAssignmentsScreen';
 import DeliveryDashboardScreen from '../screens/DeliveryDashboardScreen';
 import NotAuthorizedScreen from '../screens/NotAuthorizedScreen';
 import AdminDashboardScreen from '../screens/AdminDashboardScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ function FarmerStackNavigator() {
       <FarmerStack.Screen name="FarmerDashboard" component={FarmerDashboardScreen} options={{ headerShown: false }} />
       <FarmerStack.Screen name="FarmerProductsList" component={FarmerProductsScreen} options={{ title: 'My Products' }} />
       <FarmerStack.Screen name="AddProduct" component={AddProductScreen} options={{ title: 'Add Product' }} />
+      <FarmerStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <FarmerStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </FarmerStack.Navigator>
   );
 }
@@ -69,6 +72,8 @@ function MerchantStackNavigator() {
     <MerchantStack.Navigator>
       <MerchantStack.Screen name="MerchantDashboard" component={MerchantDashboardScreen} options={{ headerShown: false }} />
       <MerchantStack.Screen name="MerchantOrdersList" component={MerchantOrdersScreen} options={{ title: 'My Orders' }} />
+      <MerchantStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <MerchantStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </MerchantStack.Navigator>
   );
 }
@@ -89,6 +94,8 @@ function DeliveryStackNavigator() {
     <DeliveryStack.Navigator>
       <DeliveryStack.Screen name="DeliveryDashboard" component={DeliveryDashboardScreen} options={{ headerShown: false }} />
       <DeliveryStack.Screen name="DeliveryAssignmentsList" component={DeliveryAssignmentsScreen} options={{ title: 'My Assignments' }} />
+      <DeliveryStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <DeliveryStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </DeliveryStack.Navigator>
   );
 }
@@ -108,6 +115,8 @@ function AdminStackNavigator() {
   return (
     <AdminStack.Navigator>
       <AdminStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ headerShown: false }} />
+      <AdminStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <AdminStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </AdminStack.Navigator>
   );
 }
@@ -119,16 +128,6 @@ function AdminNavigator() {
       <AdminTab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Marketplace', headerShown: false }} />
       <AdminTab.Screen name="AdminStack" component={AdminStackNavigator} options={{ title: 'Admin', headerShown: false }} />
     </AdminTab.Navigator>
-  );
-}
-
-// ─── Placeholder Screens ──────────────────────────────────────────────────────
-
-function AdminPlaceholderScreen() {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.text}>Admin Panel (Coming Soon)</Text>
-    </View>
   );
 }
 
@@ -145,8 +144,3 @@ export default function AppNavigator() {
 
   return <NotAuthorizedScreen />;
 }
-
-const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  text: { fontSize: 18, color: '#616161' },
-});
