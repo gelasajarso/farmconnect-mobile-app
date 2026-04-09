@@ -14,6 +14,7 @@ import type {
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
+import FarmerDashboardScreen from '../screens/FarmerDashboardScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import FarmerProductsScreen from '../screens/FarmerProductsScreen';
 import AddProductScreen from '../screens/AddProductScreen';
@@ -37,6 +38,7 @@ const FarmerStack = createStackNavigator<FarmerStackParamList>();
 function FarmerStackNavigator() {
   return (
     <FarmerStack.Navigator>
+      <FarmerStack.Screen name="FarmerDashboard" component={FarmerDashboardScreen} options={{ headerShown: false }} />
       <FarmerStack.Screen name="FarmerProductsList" component={FarmerProductsScreen} options={{ title: 'My Products' }} />
       <FarmerStack.Screen name="AddProduct" component={AddProductScreen} options={{ title: 'Add Product' }} />
     </FarmerStack.Navigator>

@@ -9,6 +9,7 @@ export type HomeStackParamList = {
 };
 
 export type FarmerStackParamList = {
+  FarmerDashboard: undefined;
   FarmerProductsList: undefined;
   AddProduct: undefined;
 };
