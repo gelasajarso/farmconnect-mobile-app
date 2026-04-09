@@ -30,6 +30,7 @@ export default function FarmerProductsScreen() {
   const { user, resolveSystemUserId } = useAuth();
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   // Attempt to resolve system_user_id via orders if not yet available
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function FarmerProductsScreen() {
       }
     }
     resolve();
-  }, [user?.system_user_id, resolveSystemUserId]);
+  }, [user?.system_user_id, resolveSystemUserId, retryCount]);
 
   const farmerId = user?.system_user_id ?? null;
   const { products, loading, error, refetch } = useFarmerProducts(farmerId);
@@ -62,7 +63,7 @@ export default function FarmerProductsScreen() {
     return (
       <ErrorView
         message={resolveError}
-        onRetry={() => setResolveError('')}
+        onRetry={() => setRetryCount((c) => c + 1)}
       />
     );
   }

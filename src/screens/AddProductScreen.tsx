@@ -56,10 +56,16 @@ export default function AddProductScreen() {
 
   function validate(): boolean {
     const e: Record<string, string> = {};
-    if (!name.trim() || name.trim().length < 2) e.name = 'Name must be at least 2 characters.';
-    if (name.trim().length > 100) e.name = 'Name must be at most 100 characters.';
-    if (!category) e.category = 'Category is required.';
-    if (!unit) e.unit = 'Unit is required.';
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      e.name = 'Product name is required.';
+    } else if (trimmedName.length < 2) {
+      e.name = 'Name must be at least 2 characters.';
+    } else if (trimmedName.length > 100) {
+      e.name = 'Name must be at most 100 characters.';
+    }
+    if (!category || !CATEGORIES.includes(category)) e.category = 'Category is required.';
+    if (!unit || !UNITS.includes(unit)) e.unit = 'Unit is required.';
     const price = parseFloat(basePrice);
     if (!basePrice.trim() || isNaN(price) || price <= 0) e.basePrice = 'Price must be greater than 0.';
     const qty = parseFloat(totalQuantity);

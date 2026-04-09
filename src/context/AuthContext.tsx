@@ -11,10 +11,12 @@ import * as authService from '../services/auth.service';
 import {
   storeTokens,
   clearTokens,
+  clearUserProfile,
   getAccessToken,
   getRefreshToken,
   getSystemUserId,
   storeSystemUserId,
+  TOKEN_KEYS,
 } from '../utils/tokenStorage';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -115,7 +117,7 @@ export function useAuth(): AuthContextValue {
 
 import * as SecureStore from 'expo-secure-store';
 
-const USER_PROFILE_KEY = 'user_profile';
+const USER_PROFILE_KEY = TOKEN_KEYS.USER_PROFILE;
 
 async function storeUserProfile(profile: AuthUser): Promise<void> {
   const serialized = JSON.stringify({
@@ -135,8 +137,4 @@ async function getStoredUserProfile(): Promise<Omit<AuthUser, 'system_user_id'> 
   } catch {
     return null;
   }
-}
-
-async function clearUserProfile(): Promise<void> {
-  await SecureStore.deleteItemAsync(USER_PROFILE_KEY);
 }

@@ -10,6 +10,7 @@ interface OrderRowProps {
 export default function OrderRow({ item }: OrderRowProps) {
   return (
     <View style={styles.row}>
+      <Text style={styles.label}>Order ID: <Text style={styles.value}>{item.id}</Text></Text>
       <Text style={styles.label}>Product: <Text style={styles.value}>{item.product_id}</Text></Text>
       <Text style={styles.label}>Qty: <Text style={styles.value}>{item.quantity}</Text></Text>
       <Text style={styles.label}>Unit Price: <Text style={styles.value}>{item.unit_price.toFixed(2)}</Text></Text>

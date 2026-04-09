@@ -30,15 +30,19 @@ export function useProductDetail(productId: string) {
   const [product, setProduct] = useState<ProductPublicDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setErrorStatus(null);
     try {
       const data = await getProduct(productId);
       setProduct(data);
     } catch (err) {
-      setError(extractApiError(err).message);
+      const apiErr = extractApiError(err);
+      setError(apiErr.message);
+      setErrorStatus(apiErr.status);
     } finally {
       setLoading(false);
     }
@@ -46,7 +50,7 @@ export function useProductDetail(productId: string) {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { product, loading, error, refetch: fetch };
+  return { product, loading, error, errorStatus, refetch: fetch };
 }
 
 export function useFarmerProducts(farmerId: string | null) {

@@ -4,6 +4,7 @@ export const TOKEN_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   SYSTEM_USER_ID: 'system_user_id',
+  USER_PROFILE: 'user_profile',
 } as const;
 
 export async function storeTokens(access: string, refresh: string): Promise<void> {
@@ -31,4 +32,8 @@ export async function storeSystemUserId(id: string): Promise<void> {
 
 export async function getSystemUserId(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEYS.SYSTEM_USER_ID);
+}
+
+export async function clearUserProfile(): Promise<void> {
+  await SecureStore.deleteItemAsync(TOKEN_KEYS.USER_PROFILE);
 }

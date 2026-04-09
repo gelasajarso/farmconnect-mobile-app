@@ -19,6 +19,7 @@ import FarmerProductsScreen from '../screens/FarmerProductsScreen';
 import AddProductScreen from '../screens/AddProductScreen';
 import MerchantOrdersScreen from '../screens/MerchantOrdersScreen';
 import DeliveryAssignmentsScreen from '../screens/DeliveryAssignmentsScreen';
+import NotAuthorizedScreen from '../screens/NotAuthorizedScreen';
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -90,14 +91,6 @@ function AdminPlaceholderScreen() {
   return (
     <View style={styles.center}>
       <Text style={styles.text}>Admin Panel (Coming Soon)</Text>
-    </View>
-  );
-}
-
-function NotAuthorizedScreen() {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.text}>Not Authorized</Text>
     </View>
   );
 }

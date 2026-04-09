@@ -33,7 +33,7 @@ export default function ProductDetailScreen() {
   const route = useRoute<DetailRouteProp>();
   const { productId } = route.params;
   const { user, resolveSystemUserId } = useAuth();
-  const { product, loading, error, refetch } = useProductDetail(productId);
+  const { product, loading, error, errorStatus, refetch } = useProductDetail(productId);
 
   const [quantity, setQuantity] = useState('');
   const [orderLoading, setOrderLoading] = useState(false);
@@ -42,7 +42,7 @@ export default function ProductDetailScreen() {
 
   if (loading) return <LoadingIndicator />;
   if (error) {
-    if (error.includes('404') || error.toLowerCase().includes('not found')) {
+    if (errorStatus === 404 || error.toLowerCase().includes('not found')) {
       return (
         <View style={styles.center}>
           <Text style={styles.notFound}>Product not found</Text>
