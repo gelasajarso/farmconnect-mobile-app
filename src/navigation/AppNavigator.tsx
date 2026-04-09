@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import type {
   FarmerTabParamList,
   MerchantTabParamList,
+  MerchantStackParamList,
   DeliveryTabParamList,
   AdminTabParamList,
   HomeStackParamList,
@@ -19,6 +20,7 @@ import ProductDetailScreen from '../screens/ProductDetailScreen';
 import FarmerProductsScreen from '../screens/FarmerProductsScreen';
 import AddProductScreen from '../screens/AddProductScreen';
 import MerchantOrdersScreen from '../screens/MerchantOrdersScreen';
+import MerchantDashboardScreen from '../screens/MerchantDashboardScreen';
 import DeliveryAssignmentsScreen from '../screens/DeliveryAssignmentsScreen';
 import NotAuthorizedScreen from '../screens/NotAuthorizedScreen';
 
@@ -57,12 +59,22 @@ function FarmerNavigator() {
   );
 }
 
+const MerchantStack = createStackNavigator<MerchantStackParamList>();
+function MerchantStackNavigator() {
+  return (
+    <MerchantStack.Navigator>
+      <MerchantStack.Screen name="MerchantDashboard" component={MerchantDashboardScreen} options={{ headerShown: false }} />
+      <MerchantStack.Screen name="MerchantOrdersList" component={MerchantOrdersScreen} options={{ title: 'My Orders' }} />
+    </MerchantStack.Navigator>
+  );
+}
+
 const MerchantTab = createBottomTabNavigator<MerchantTabParamList>();
 function MerchantNavigator() {
   return (
     <MerchantTab.Navigator>
       <MerchantTab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Marketplace', headerShown: false }} />
-      <MerchantTab.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ title: 'My Orders' }} />
+      <MerchantTab.Screen name="MerchantStack" component={MerchantStackNavigator} options={{ title: 'My Orders', headerShown: false }} />
     </MerchantTab.Navigator>
   );
 }

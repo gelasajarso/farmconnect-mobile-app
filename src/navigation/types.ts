@@ -19,9 +19,14 @@ export type FarmerTabParamList = {
   FarmerProductsStack: undefined;
 };
 
+export type MerchantStackParamList = {
+  MerchantDashboard: undefined;
+  MerchantOrdersList: undefined;
+};
+
 export type MerchantTabParamList = {
   HomeStack: undefined;
-  MerchantOrders: undefined;
+  MerchantStack: undefined;
 };
 
 export type DeliveryTabParamList = {
