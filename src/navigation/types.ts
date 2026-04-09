@@ -29,12 +29,21 @@ export type MerchantTabParamList = {
   MerchantStack: undefined;
 };
 
+export type DeliveryStackParamList = {
+  DeliveryDashboard: undefined;
+  DeliveryAssignmentsList: undefined;
+};
+
 export type DeliveryTabParamList = {
   HomeStack: undefined;
-  DeliveryAssignments: undefined;
+  DeliveryStack: undefined;
+};
+
+export type AdminStackParamList = {
+  AdminDashboard: undefined;
 };
 
 export type AdminTabParamList = {
   HomeStack: undefined;
-  AdminPlaceholder: undefined;
+  AdminStack: undefined;
 };

@@ -8,7 +8,9 @@ import type {
   MerchantTabParamList,
   MerchantStackParamList,
   DeliveryTabParamList,
+  DeliveryStackParamList,
   AdminTabParamList,
+  AdminStackParamList,
   HomeStackParamList,
   FarmerStackParamList,
 } from './types';
@@ -22,7 +24,9 @@ import AddProductScreen from '../screens/AddProductScreen';
 import MerchantOrdersScreen from '../screens/MerchantOrdersScreen';
 import MerchantDashboardScreen from '../screens/MerchantDashboardScreen';
 import DeliveryAssignmentsScreen from '../screens/DeliveryAssignmentsScreen';
+import DeliveryDashboardScreen from '../screens/DeliveryDashboardScreen';
 import NotAuthorizedScreen from '../screens/NotAuthorizedScreen';
+import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -79,13 +83,32 @@ function MerchantNavigator() {
   );
 }
 
+const DeliveryStack = createStackNavigator<DeliveryStackParamList>();
+function DeliveryStackNavigator() {
+  return (
+    <DeliveryStack.Navigator>
+      <DeliveryStack.Screen name="DeliveryDashboard" component={DeliveryDashboardScreen} options={{ headerShown: false }} />
+      <DeliveryStack.Screen name="DeliveryAssignmentsList" component={DeliveryAssignmentsScreen} options={{ title: 'My Assignments' }} />
+    </DeliveryStack.Navigator>
+  );
+}
+
 const DeliveryTab = createBottomTabNavigator<DeliveryTabParamList>();
 function DeliveryNavigator() {
   return (
     <DeliveryTab.Navigator>
       <DeliveryTab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Marketplace', headerShown: false }} />
-      <DeliveryTab.Screen name="DeliveryAssignments" component={DeliveryAssignmentsScreen} options={{ title: 'Deliveries' }} />
+      <DeliveryTab.Screen name="DeliveryStack" component={DeliveryStackNavigator} options={{ title: 'Deliveries', headerShown: false }} />
     </DeliveryTab.Navigator>
+  );
+}
+
+const AdminStack = createStackNavigator<AdminStackParamList>();
+function AdminStackNavigator() {
+  return (
+    <AdminStack.Navigator>
+      <AdminStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ headerShown: false }} />
+    </AdminStack.Navigator>
   );
 }
 
@@ -94,7 +117,7 @@ function AdminNavigator() {
   return (
     <AdminTab.Navigator>
       <AdminTab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Marketplace', headerShown: false }} />
-      <AdminTab.Screen name="AdminPlaceholder" component={AdminPlaceholderScreen} options={{ title: 'Admin' }} />
+      <AdminTab.Screen name="AdminStack" component={AdminStackNavigator} options={{ title: 'Admin', headerShown: false }} />
     </AdminTab.Navigator>
   );
 }
