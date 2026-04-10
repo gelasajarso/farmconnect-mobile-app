@@ -5,9 +5,9 @@ import React, {
   useState,
   useCallback,
   ReactNode,
-} from 'react';
-import type { AuthUser, AuthContextValue, UserRole } from '../types';
-import * as authService from '../services/auth.service';
+} from "react";
+import type { AuthUser, AuthContextValue, UserRole } from "../types";
+import * as authService from "../services/auth.service";
 import {
   storeTokens,
   clearTokens,
@@ -17,7 +17,7 @@ import {
   getSystemUserId,
   storeSystemUserId,
   TOKEN_KEYS,
-} from '../utils/tokenStorage';
+} from "../utils/tokenStorage";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -98,7 +98,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, resolveSystemUserId }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, logout, resolveSystemUserId }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -107,7 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return ctx;
 }
@@ -115,7 +117,7 @@ export function useAuth(): AuthContextValue {
 // ─── User Profile Storage Helpers ────────────────────────────────────────────
 // Store minimal user profile (without tokens) for session hydration
 
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 
 const USER_PROFILE_KEY = TOKEN_KEYS.USER_PROFILE;
 
@@ -129,11 +131,14 @@ async function storeUserProfile(profile: AuthUser): Promise<void> {
   await SecureStore.setItemAsync(USER_PROFILE_KEY, serialized);
 }
 
-async function getStoredUserProfile(): Promise<Omit<AuthUser, 'system_user_id'> | null> {
+async function getStoredUserProfile(): Promise<Omit<
+  AuthUser,
+  "system_user_id"
+> | null> {
   const raw = await SecureStore.getItemAsync(USER_PROFILE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as Omit<AuthUser, 'system_user_id'>;
+    return JSON.parse(raw) as Omit<AuthUser, "system_user_id">;
   } catch {
     return null;
   }
