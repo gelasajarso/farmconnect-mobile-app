@@ -29,6 +29,7 @@ import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import TransactionHistoryScreen from '../screens/TransactionHistoryScreen';
 import TransactionDetailScreen from '../screens/TransactionDetailScreen';
 
@@ -53,6 +54,7 @@ function FarmerStackNavigator() {
       <FarmerStack.Screen name="AddProduct" component={AddProductScreen} options={{ title: 'Add Product' }} />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
       <FarmerStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <FarmerStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <FarmerStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
     </FarmerStack.Navigator>
   );
@@ -81,6 +83,7 @@ function MerchantStackNavigator() {
       <MerchantStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
       <MerchantStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
       <MerchantStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <MerchantStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
     </MerchantStack.Navigator>
   );
 }
@@ -104,6 +107,7 @@ function DeliveryStackNavigator() {
       <DeliveryStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
       <DeliveryStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
       <DeliveryStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <DeliveryStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
     </DeliveryStack.Navigator>
   );
 }
@@ -125,6 +129,7 @@ function AdminStackNavigator() {
       <AdminStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ headerShown: false }} />
       <AdminStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
       <AdminStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <AdminStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <AdminStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
     </AdminStack.Navigator>
   );

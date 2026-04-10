@@ -1,2 +1,8 @@
 /.env
 node_modules
+
+# Local tool folders — not needed in repo
+.kiro/
+.dist/
+.expo/
+.vscode/
