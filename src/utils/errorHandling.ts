@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../services/api';
 
 export interface ApiError {
   status: number;
@@ -8,15 +9,27 @@ export interface ApiError {
 
 export function extractApiError(error: unknown): ApiError {
   if (axios.isAxiosError(error)) {
+    const isNetworkError =
+      error.code === 'ERR_NETWORK' ||
+      (!error.response &&
+        (error.message?.toLowerCase().includes('network') ?? false));
+
     // Timeout: Axios sets code to 'ECONNABORTED' or the message contains 'timeout'
     const isTimeout =
       error.code === 'ECONNABORTED' ||
       (error.message?.toLowerCase().includes('timeout') ?? false);
 
+    if (isNetworkError) {
+      return {
+        status: 0,
+        message: `Cannot reach the API server at ${API_BASE_URL}.`,
+      };
+    }
+
     if (isTimeout) {
       return {
         status: 0,
-        message: 'Network error: request timed out.',
+        message: `Request to ${API_BASE_URL} timed out.`,
       };
     }
 
@@ -36,6 +49,6 @@ export function extractApiError(error: unknown): ApiError {
   // Non-Axios errors (e.g. network unreachable) — never surface raw stack traces
   return {
     status: 0,
-    message: 'Network error. Please check your connection.',
+    message: `Cannot reach the API server at ${API_BASE_URL}.`,
   };
 }

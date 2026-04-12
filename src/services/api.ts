@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import {
   getAccessToken,
@@ -11,17 +12,34 @@ import type { RefreshTokenResponse } from '../types';
 // Navigation ref — attached to NavigationContainer in App.tsx
 export const navigationRef = createNavigationContainerRef<any>();
 
-// Base URL from environment variable, fallback to localhost
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? (() => {
-  console.warn(
-    '[API] EXPO_PUBLIC_API_URL is not set. Falling back to http://localhost:8000/api/v1'
-  );
+function getDefaultBaseUrl() {
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000/api/v1';
+  }
+
   return 'http://localhost:8000/api/v1';
-})();
+}
+
+function normalizeBaseUrl(url?: string) {
+  const trimmed = url?.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+
+  const fallbackUrl = getDefaultBaseUrl();
+  console.warn(
+    `[API] EXPO_PUBLIC_API_URL is not set. Falling back to ${fallbackUrl}`
+  );
+  return fallbackUrl;
+}
+
+export const API_BASE_URL = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+
+console.info(`[API] Using base URL: ${API_BASE_URL}`);
 
 // Axios instance
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -61,7 +79,7 @@ api.interceptors.response.use(
 
         // Call refresh endpoint directly (not through intercepted api instance)
         const { data } = await axios.post<RefreshTokenResponse>(
-          `${BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/refresh`,
           { refresh_token: refreshToken },
           { headers: { 'Content-Type': 'application/json' } }
         );
