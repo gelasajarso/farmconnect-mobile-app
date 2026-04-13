@@ -1,7 +1,10 @@
 import api from './api';
+import { USE_MOCK } from '../mock';
+import { mockLogin } from '../mock/mockServices';
 import type { LoginResponse, RefreshTokenResponse, TokenInfoResponse } from '../types';
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
+  if (USE_MOCK) return mockLogin(email, password);
   const { data } = await api.post<LoginResponse>('/auth/login', { email, password });
   return data;
 }

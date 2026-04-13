@@ -1,12 +1,7 @@
 import React, { useMemo } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, SafeAreaView, ActivityIndicator, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -19,12 +14,8 @@ import type { DeliveryResponse, DeliveryStatus } from '../types';
 type DashNavProp = BottomTabNavigationProp<DeliveryTabParamList>;
 
 const STATUS_COLORS: Record<DeliveryStatus, string> = {
-  ASSIGNED: '#1565C0',
-  PICKED_UP: '#6A1B9A',
-  IN_TRANSIT: '#00838F',
-  DELIVERED: '#2E7D32',
-  FAILED: '#B71C1C',
-  CANCELLED: '#757575',
+  ASSIGNED: '#1565C0', PICKED_UP: '#6A1B9A', IN_TRANSIT: '#E65100',
+  DELIVERED: '#1A7A35', FAILED: '#B71C1C', CANCELLED: '#757575',
 };
 
 export default function DeliveryDashboardScreen() {
@@ -33,13 +24,13 @@ export default function DeliveryDashboardScreen() {
   const { deliveries, loading, error, refetch } = useDeliveries();
 
   const stats = useMemo(() => ({
-    total: deliveries.length,
-    active: deliveries.filter((d) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
-    delivered: deliveries.filter((d) => d.status === 'DELIVERED').length,
-    failed: deliveries.filter((d) => d.status === 'FAILED').length,
+    total:     deliveries.length,
+    active:    deliveries.filter(d => ['ASSIGNED','PICKED_UP','IN_TRANSIT'].includes(d.status)).length,
+    delivered: deliveries.filter(d => d.status === 'DELIVERED').length,
+    failed:    deliveries.filter(d => d.status === 'FAILED').length,
   }), [deliveries]);
 
-  const recent = deliveries.slice(0, 4);
+  const initials = (user?.name ?? 'D').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -47,140 +38,165 @@ export default function DeliveryDashboardScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>On the road,</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>On the road 🚚</Text>
             <Text style={styles.name}>{user?.name ?? 'Agent'}</Text>
             {user?.system_user_id && <Text style={styles.userId}>{user.system_user_id}</Text>}
           </View>
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
 
         {/* Stats */}
-        <View style={styles.statsRow}>
-          <StatCard label="Total" value={stats.total} color="#00838F" loading={loading} />
-          <StatCard label="Active" value={stats.active} color="#1565C0" loading={loading} />
-          <StatCard label="Delivered" value={stats.delivered} color="#2E7D32" loading={loading} />
-          <StatCard label="Failed" value={stats.failed} color="#B71C1C" loading={loading} />
+        <View style={styles.statsGrid}>
+          <StatCard label="Total"     value={stats.total}     color="#1A7A35" bg="#F0FBF3" loading={loading} />
+          <StatCard label="Active"    value={stats.active}    color="#1565C0" bg="#E3F2FD" loading={loading} />
+          <StatCard label="Delivered" value={stats.delivered} color="#1A7A35" bg="#F0FBF3" loading={loading} />
+          <StatCard label="Failed"    value={stats.failed}    color="#B71C1C" bg="#FFEBEE" loading={loading} />
         </View>
 
         {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <QuickAction emoji="📋" label="All Assignments" onPress={() => navigation.navigate('DeliveryAssignments')} />
-          <QuickAction emoji="🗺️" label="Active Routes" onPress={() => navigation.navigate('DeliveryAssignments')} />
-          <QuickAction emoji="🛒" label="Marketplace" onPress={() => navigation.navigate('HomeStack')} />
+          <ActionCard emoji="📋" label="Assignments" onPress={() => navigation.navigate('DeliveryStack')} />
+          <ActionCard emoji="🗺️" label="Active Routes" onPress={() => navigation.navigate('DeliveryStack')} />
+          <ActionCard emoji="🛒" label="Marketplace"  onPress={() => navigation.navigate('HomeStack')} />
         </View>
 
         {/* Recent Assignments */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Assignments</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('DeliveryAssignments')}>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
+        <SectionHeader title="Recent Assignments" onSeeAll={() => navigation.navigate('DeliveryStack')} />
         {loading ? (
-          <ActivityIndicator color="#00838F" style={styles.loader} />
+          <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : error ? (
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
+            <TouchableOpacity onPress={refetch} style={styles.retryBtn}><Text style={styles.retryText}>Retry</Text></TouchableOpacity>
           </View>
-        ) : recent.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyEmoji}>🚚</Text>
-            <Text style={styles.emptyText}>No assignments yet.</Text>
-          </View>
+        ) : deliveries.length === 0 ? (
+          <View style={styles.emptyCard}><Text style={styles.emptyText}>No assignments yet.</Text></View>
         ) : (
-          recent.map((d) => <DeliveryMiniCard key={d.id} item={d} />)
+          deliveries.slice(0, 4).map(d => <DeliveryRow key={d.id} item={d} />)
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={styles.bottomPad} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function StatCard({ label, value, color, loading }: { label: string; value: number; color: string; loading: boolean }) {
+function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
   return (
-    <View style={[styles.statCard, { borderTopColor: color }]}>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {onSeeAll && <TouchableOpacity onPress={onSeeAll}><Text style={styles.seeAll}>See all →</Text></TouchableOpacity>}
+    </View>
+  );
+}
+
+function StatCard({ label, value, color, bg, loading }: { label: string; value: number; color: string; bg: string; loading: boolean }) {
+  return (
+    <View style={[styles.statCard, { backgroundColor: bg }]}>
       {loading ? <ActivityIndicator size="small" color={color} /> : <Text style={[styles.statValue, { color }]}>{value}</Text>}
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function QuickAction({ emoji, label, onPress }: { emoji: string; label: string; onPress: () => void }) {
+function ActionCard({ emoji, label, onPress }: { emoji: string; label: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.75}>
-      <Text style={styles.actionEmoji}>{emoji}</Text>
+      <View style={styles.actionIconWrap}><Text style={styles.actionEmoji}>{emoji}</Text></View>
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-function DeliveryMiniCard({ item }: { item: DeliveryResponse }) {
+function DeliveryRow({ item }: { item: DeliveryResponse }) {
   const color = STATUS_COLORS[item.status];
   return (
-    <View style={styles.miniCard}>
-      <View style={{ flex: 1, marginRight: 12 }}>
-        <Text style={styles.miniCardId}>Delivery #{item.id.slice(-8).toUpperCase()}</Text>
-        <Text style={styles.miniCardSub}>Order: {item.order_id.slice(-8).toUpperCase()}</Text>
-        {item.pickup_time && <Text style={styles.miniCardSub}>Pickup: {new Date(item.pickup_time).toLocaleDateString()}</Text>}
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Text style={styles.rowTitle}>Delivery #{item.id.slice(-8).toUpperCase()}</Text>
+        <Text style={styles.rowSub}>Order: {item.order_id.slice(-8).toUpperCase()}</Text>
+        {item.pickup_time && <Text style={styles.rowSub}>Pickup: {new Date(item.pickup_time).toLocaleDateString()}</Text>}
       </View>
-      <View style={[styles.statusBadge, { backgroundColor: color + '18' }]}>
-        <Text style={[styles.statusBadgeText, { color }]}>{DELIVERY_STATUS_LABELS[item.status]}</Text>
+      <View style={[styles.badge, { backgroundColor: color + '18' }]}>
+        <Text style={[styles.badgeText, { color }]}>{DELIVERY_STATUS_LABELS[item.status]}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#E0F7FA' },
+  safe: { flex: 1, backgroundColor: '#F7F9F7' },
+
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    backgroundColor: '#00695C', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#1A7A35',
+    paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 20 : 16, paddingBottom: 22,
   },
-  greeting: { fontSize: 13, color: '#80CBC4', fontWeight: '500' },
-  name: { fontSize: 22, fontWeight: '800', color: '#fff', marginTop: 2 },
-  userId: { fontSize: 12, color: '#4DB6AC', marginTop: 2 },
-  logoutBtn: { backgroundColor: '#004D40', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginTop: 4 },
-  logoutText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  statsRow: { flexDirection: 'row', marginHorizontal: 16, marginTop: 16, gap: 8 },
-  statCard: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 10, paddingVertical: 12,
-    alignItems: 'center', borderTopWidth: 3, elevation: 2,
+  headerLeft: { flex: 1 },
+  greeting: { fontSize: 13, color: '#A8D5B5', fontWeight: '500' },
+  name: { fontSize: 22, fontWeight: '800', color: '#fff', marginTop: 2, letterSpacing: -0.3 },
+  userId: { fontSize: 12, color: '#7DC49A', marginTop: 2 },
+  logoutBtn: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
-  statValue: { fontSize: 22, fontWeight: '800' },
-  statLabel: { fontSize: 11, color: '#757575', marginTop: 2, fontWeight: '500' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#004D40', marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
-  seeAll: { fontSize: 13, color: '#00695C', fontWeight: '600' },
+  logoutText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  statsGrid: { flexDirection: 'row', marginHorizontal: 16, marginTop: 16, gap: 8 },
+  statCard: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  statValue: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  statLabel: { fontSize: 11, color: '#888', marginTop: 3, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
+
+  sectionHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginHorizontal: 20, marginTop: 28, marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#0D1B0F', letterSpacing: -0.2 },
+  seeAll: { fontSize: 13, color: '#1A7A35', fontWeight: '600' },
+
   actionsRow: { flexDirection: 'row', marginHorizontal: 16, gap: 10 },
   actionCard: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingVertical: 16,
-    alignItems: 'center', elevation: 1,
+    flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 16,
+    alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  actionEmoji: { fontSize: 26, marginBottom: 6 },
-  actionLabel: { fontSize: 12, fontWeight: '600', color: '#00695C', textAlign: 'center' },
-  miniCard: {
+  actionIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#F0FBF3', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  actionEmoji: { fontSize: 20 },
+  actionLabel: { fontSize: 12, fontWeight: '600', color: '#0D1B0F', textAlign: 'center' },
+
+  row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 10, padding: 14, marginHorizontal: 16, marginBottom: 8, elevation: 1,
+    borderRadius: 12, padding: 14, marginHorizontal: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: '#F0F0F0',
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1,
   },
-  miniCardId: { fontSize: 14, fontWeight: '700', color: '#004D40' },
-  miniCardSub: { fontSize: 12, color: '#757575', marginTop: 2 },
-  statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  statusBadgeText: { fontSize: 11, fontWeight: '600' },
-  emptyCard: { backgroundColor: '#fff', borderRadius: 10, padding: 24, marginHorizontal: 16, alignItems: 'center' },
-  emptyEmoji: { fontSize: 36, marginBottom: 8 },
+  rowLeft: { flex: 1, marginRight: 12 },
+  rowTitle: { fontSize: 14, fontWeight: '700', color: '#0D1B0F' },
+  rowSub: { fontSize: 12, color: '#9E9E9E', marginTop: 2 },
+  badge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  badgeText: { fontSize: 11, fontWeight: '600' },
+
+  emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0' },
   emptyText: { fontSize: 14, color: '#9E9E9E' },
-  errorCard: { backgroundColor: '#fff', borderRadius: 10, padding: 20, marginHorizontal: 16, alignItems: 'center' },
+
+  errorCard: { backgroundColor: '#FFEBEE', borderRadius: 12, padding: 16, marginHorizontal: 16, alignItems: 'center' },
   errorText: { fontSize: 13, color: '#B71C1C', marginBottom: 10 },
-  retryBtn: { backgroundColor: '#FFEBEE', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
+  retryBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   retryText: { fontSize: 13, color: '#B71C1C', fontWeight: '600' },
-  loader: { marginVertical: 16 },
+
+  loader: { marginVertical: 20 },
+  bottomPad: { height: 40 },
 });

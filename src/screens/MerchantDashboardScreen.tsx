@@ -1,12 +1,7 @@
 import React, { useMemo } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, SafeAreaView, ActivityIndicator, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -18,17 +13,10 @@ import type { OrderDTO, OrderStatus } from '../types';
 
 type DashNavProp = BottomTabNavigationProp<MerchantTabParamList>;
 
-// Status badge colors
-const ORDER_STATUS_COLORS: Partial<Record<OrderStatus, string>> = {
-  CREATED: '#1565C0',
-  PENDING_PAYMENT: '#F57F17',
-  FUNDED: '#6A1B9A',
-  CONFIRMED: '#2E7D32',
-  IN_DELIVERY: '#00838F',
-  DELIVERED: '#558B2F',
-  COMPLETED: '#1B5E20',
-  CANCELLED: '#B71C1C',
-  EXPIRED: '#757575',
+const STATUS_COLORS: Partial<Record<OrderStatus, string>> = {
+  CREATED: '#1565C0', PENDING_PAYMENT: '#E65100', FUNDED: '#6A1B9A',
+  CONFIRMED: '#1A7A35', IN_DELIVERY: '#00838F', DELIVERED: '#1A7A35',
+  COMPLETED: '#1A7A35', CANCELLED: '#B71C1C', EXPIRED: '#757575',
 };
 
 export default function MerchantDashboardScreen() {
@@ -36,96 +24,69 @@ export default function MerchantDashboardScreen() {
   const { user, logout } = useAuth();
   const { orders, loading, error, refetch } = useOrders();
 
-  // Derived stats
   const stats = useMemo(() => {
-    const total = orders.length;
-    const active = orders.filter((o) =>
-      ['CREATED', 'PENDING_PAYMENT', 'FUNDED', 'CONFIRMED', 'IN_DELIVERY'].includes(o.status)
-    ).length;
-    const completed = orders.filter((o) => o.status === 'COMPLETED').length;
-    const totalSpent = orders
-      .filter((o) => ['COMPLETED', 'DELIVERED'].includes(o.status))
-      .reduce((sum, o) => sum + o.total_price, 0);
-    return { total, active, completed, totalSpent };
+    const total     = orders.length;
+    const active    = orders.filter(o => ['CREATED','PENDING_PAYMENT','FUNDED','CONFIRMED','IN_DELIVERY'].includes(o.status)).length;
+    const completed = orders.filter(o => o.status === 'COMPLETED').length;
+    const spent     = orders.filter(o => ['COMPLETED','DELIVERED'].includes(o.status)).reduce((s, o) => s + o.total_price, 0);
+    return { total, active, completed, spent };
   }, [orders]);
 
-  const recentOrders = orders.slice(0, 4);
+  const initials = (user?.name ?? 'M').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Welcome back,</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>Welcome back 👋</Text>
             <Text style={styles.name}>{user?.name ?? 'Merchant'}</Text>
-            {user?.system_user_id && (
-              <Text style={styles.userId}>{user.system_user_id}</Text>
-            )}
+            {user?.system_user_id && <Text style={styles.userId}>{user.system_user_id}</Text>}
           </View>
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Spending Banner ── */}
-        <View style={styles.spendBanner}>
+        {/* Spend banner */}
+        <View style={styles.spendCard}>
           <Text style={styles.spendLabel}>Total Spent</Text>
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.spendValue}>
-              ${stats.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </Text>
-          )}
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.spendValue}>${stats.spent.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+          }
           <Text style={styles.spendSub}>on completed orders</Text>
         </View>
 
-        {/* ── Stats Row ── */}
-        <View style={styles.statsRow}>
-          <StatCard label="Total Orders" value={stats.total} color="#1565C0" loading={loading} />
-          <StatCard label="Active" value={stats.active} color="#F57F17" loading={loading} />
-          <StatCard label="Completed" value={stats.completed} color="#2E7D32" loading={loading} />
+        {/* Stats */}
+        <View style={styles.statsGrid}>
+          <StatCard label="Total"     value={stats.total}     color="#1A7A35" bg="#F0FBF3" loading={loading} />
+          <StatCard label="Active"    value={stats.active}    color="#E65100" bg="#FFF3E0" loading={loading} />
+          <StatCard label="Completed" value={stats.completed} color="#1A7A35" bg="#F0FBF3" loading={loading} />
         </View>
 
-        {/* ── Quick Actions ── */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        {/* Quick Actions */}
+        <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <QuickAction emoji="🛒" label="Browse Market" onPress={() => navigation.navigate('HomeStack')} />
-          <QuickAction emoji="📦" label="My Orders" onPress={() => navigation.navigate('MerchantStack')} />
+          <ActionCard emoji="🛒" label="Browse Market" onPress={() => navigation.navigate('HomeStack')} />
+          <ActionCard emoji="📦" label="My Orders"     onPress={() => navigation.navigate('MerchantStack')} />
         </View>
 
-        {/* ── Recent Orders ── */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Orders</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('MerchantStack')}>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
+        {/* Recent Orders */}
+        <SectionHeader title="Recent Orders" onSeeAll={() => navigation.navigate('MerchantStack')} />
         {loading ? (
-          <ActivityIndicator color="#1565C0" style={styles.loader} />
+          <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : error ? (
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
+            <TouchableOpacity onPress={refetch} style={styles.retryBtn}><Text style={styles.retryText}>Retry</Text></TouchableOpacity>
           </View>
-        ) : recentOrders.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyEmoji}>🛒</Text>
-            <Text style={styles.emptyText}>No orders yet.</Text>
-            <TouchableOpacity
-              style={styles.emptyBtn}
-              onPress={() => navigation.navigate('HomeStack')}
-            >
-              <Text style={styles.emptyBtnText}>Browse the marketplace →</Text>
-            </TouchableOpacity>
-          </View>
+        ) : orders.length === 0 ? (
+          <EmptyCard message="No orders yet." cta="Browse the marketplace →" onCta={() => navigation.navigate('HomeStack')} />
         ) : (
-          recentOrders.map((o) => <OrderMiniCard key={o.id} order={o} />)
+          orders.slice(0, 4).map(o => <OrderRow key={o.id} order={o} />)
         )}
 
         <View style={styles.bottomPad} />
@@ -134,246 +95,143 @@ export default function MerchantDashboardScreen() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  value,
-  color,
-  loading,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  loading: boolean;
-}) {
+function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
   return (
-    <View style={[styles.statCard, { borderTopColor: color }]}>
-      {loading ? (
-        <ActivityIndicator size="small" color={color} />
-      ) : (
-        <Text style={[styles.statValue, { color }]}>{value}</Text>
-      )}
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {onSeeAll && <TouchableOpacity onPress={onSeeAll}><Text style={styles.seeAll}>See all →</Text></TouchableOpacity>}
+    </View>
+  );
+}
+
+function StatCard({ label, value, color, bg, loading }: { label: string; value: number; color: string; bg: string; loading: boolean }) {
+  return (
+    <View style={[styles.statCard, { backgroundColor: bg }]}>
+      {loading ? <ActivityIndicator size="small" color={color} /> : <Text style={[styles.statValue, { color }]}>{value}</Text>}
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function QuickAction({
-  emoji,
-  label,
-  onPress,
-}: {
-  emoji: string;
-  label: string;
-  onPress: () => void;
-}) {
+function ActionCard({ emoji, label, onPress }: { emoji: string; label: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.75}>
-      <Text style={styles.actionEmoji}>{emoji}</Text>
+      <View style={styles.actionIconWrap}><Text style={styles.actionEmoji}>{emoji}</Text></View>
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-function OrderMiniCard({ order }: { order: OrderDTO }) {
-  const statusColor = ORDER_STATUS_COLORS[order.status] ?? '#757575';
+function OrderRow({ order }: { order: OrderDTO }) {
+  const color = STATUS_COLORS[order.status] ?? '#757575';
   return (
-    <View style={styles.miniCard}>
-      <View style={styles.miniCardLeft}>
-        <Text style={styles.miniCardId} numberOfLines={1}>
-          Order #{order.id.slice(-8).toUpperCase()}
-        </Text>
-        <Text style={styles.miniCardSub}>
-          {new Date(order.created_at).toLocaleDateString()} · Qty {order.quantity}
-        </Text>
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Text style={styles.rowTitle}>Order #{order.id.slice(-8).toUpperCase()}</Text>
+        <Text style={styles.rowSub}>{new Date(order.created_at).toLocaleDateString()} · Qty {order.quantity}</Text>
       </View>
-      <View style={styles.miniCardRight}>
-        <Text style={styles.miniCardPrice}>
-          ${order.total_price.toFixed(2)}
-        </Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
-          <Text style={[styles.statusBadgeText, { color: statusColor }]}>
-            {ORDER_STATUS_LABELS[order.status]}
-          </Text>
+      <View style={styles.rowRight}>
+        <Text style={styles.rowPrice}>${order.total_price.toFixed(2)}</Text>
+        <View style={[styles.badge, { backgroundColor: color + '18' }]}>
+          <Text style={[styles.badgeText, { color }]}>{ORDER_STATUS_LABELS[order.status]}</Text>
         </View>
       </View>
     </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+function EmptyCard({ message, cta, onCta }: { message: string; cta?: string; onCta?: () => void }) {
+  return (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyText}>{message}</Text>
+      {cta && onCta && <TouchableOpacity onPress={onCta} style={styles.emptyBtn}><Text style={styles.emptyBtnText}>{cta}</Text></TouchableOpacity>}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#E3F2FD' },
-  scroll: { flex: 1 },
+  safe: { flex: 1, backgroundColor: '#F7F9F7' },
 
-  // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    backgroundColor: '#1565C0',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 28,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#1A7A35',
+    paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 20 : 16, paddingBottom: 22,
   },
-  greeting: { fontSize: 13, color: '#90CAF9', fontWeight: '500' },
-  name: { fontSize: 22, fontWeight: '800', color: '#fff', marginTop: 2 },
-  userId: { fontSize: 12, color: '#64B5F6', marginTop: 2 },
+  headerLeft: { flex: 1 },
+  greeting: { fontSize: 13, color: '#A8D5B5', fontWeight: '500' },
+  name: { fontSize: 22, fontWeight: '800', color: '#fff', marginTop: 2, letterSpacing: -0.3 },
+  userId: { fontSize: 12, color: '#7DC49A', marginTop: 2 },
   logoutBtn: {
-    backgroundColor: '#0D47A1',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 20,
-    marginTop: 4,
-  },
-  logoutText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-
-  // Spending Banner
-  spendBanner: {
-    backgroundColor: '#1976D2',
-    marginHorizontal: 16,
-    marginTop: -14,
-    borderRadius: 14,
-    padding: 20,
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#1565C0',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  spendLabel: { fontSize: 13, color: '#BBDEFB', fontWeight: '500' },
-  spendValue: { fontSize: 32, fontWeight: '800', color: '#fff', marginVertical: 4 },
-  spendSub: { fontSize: 12, color: '#90CAF9' },
-
-  // Stats
-  statsRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 16,
-    gap: 8,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderTopWidth: 3,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  statValue: { fontSize: 22, fontWeight: '800' },
-  statLabel: { fontSize: 11, color: '#757575', marginTop: 2, fontWeight: '500' },
-
-  // Section
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0D47A1',
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  seeAll: { fontSize: 13, color: '#1565C0', fontWeight: '600' },
-
-  // Quick Actions
-  actionsRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    gap: 12,
-  },
-  actionCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  actionEmoji: { fontSize: 28, marginBottom: 6 },
-  actionLabel: { fontSize: 13, fontWeight: '600', color: '#1565C0', textAlign: 'center' },
-
-  // Mini Cards
-  miniCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  miniCardLeft: { flex: 1, marginRight: 12 },
-  miniCardId: { fontSize: 14, fontWeight: '700', color: '#0D47A1' },
-  miniCardSub: { fontSize: 12, color: '#757575', marginTop: 2 },
-  miniCardRight: { alignItems: 'flex-end' },
-  miniCardPrice: { fontSize: 15, fontWeight: '800', color: '#1565C0' },
-  statusBadge: {
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginTop: 4,
-  },
-  statusBadgeText: { fontSize: 11, fontWeight: '600' },
-
-  // Empty / Error
-  emptyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 24,
-    marginHorizontal: 16,
-    alignItems: 'center',
-    elevation: 1,
-  },
-  emptyEmoji: { fontSize: 36, marginBottom: 8 },
-  emptyText: { fontSize: 14, color: '#9E9E9E', marginBottom: 12 },
-  emptyBtn: {
-    backgroundColor: '#E3F2FD',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
-  emptyBtnText: { fontSize: 13, color: '#1565C0', fontWeight: '600' },
-  errorCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    marginHorizontal: 16,
-    alignItems: 'center',
+  logoutText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
+
+  spendCard: {
+    backgroundColor: '#25A244', borderRadius: 16,
+    marginHorizontal: 16, marginTop: 16, padding: 20, alignItems: 'center',
+    shadowColor: '#1A7A35', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  },
+  spendLabel: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  spendValue: { fontSize: 34, fontWeight: '800', color: '#fff', marginVertical: 4, letterSpacing: -1 },
+  spendSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)' },
+
+  statsGrid: { flexDirection: 'row', marginHorizontal: 16, marginTop: 14, gap: 8 },
+  statCard: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  statValue: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  statLabel: { fontSize: 11, color: '#888', marginTop: 3, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
+
+  sectionHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginHorizontal: 20, marginTop: 28, marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#0D1B0F', letterSpacing: -0.2 },
+  seeAll: { fontSize: 13, color: '#1A7A35', fontWeight: '600' },
+
+  actionsRow: { flexDirection: 'row', marginHorizontal: 16, gap: 10 },
+  actionCard: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 16,
+    alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1,
+  },
+  actionIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#F0FBF3', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  actionEmoji: { fontSize: 20 },
+  actionLabel: { fontSize: 12, fontWeight: '600', color: '#0D1B0F', textAlign: 'center' },
+
+  row: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    marginHorizontal: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: '#F0F0F0',
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1,
+  },
+  rowLeft: { flex: 1, marginRight: 12 },
+  rowTitle: { fontSize: 14, fontWeight: '700', color: '#0D1B0F' },
+  rowSub: { fontSize: 12, color: '#9E9E9E', marginTop: 2 },
+  rowRight: { alignItems: 'flex-end' },
+  rowPrice: { fontSize: 14, fontWeight: '800', color: '#1A7A35' },
+  badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4 },
+  badgeText: { fontSize: 11, fontWeight: '600' },
+
+  emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0' },
+  emptyText: { fontSize: 14, color: '#9E9E9E', marginBottom: 10 },
+  emptyBtn: { backgroundColor: '#F0FBF3', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  emptyBtnText: { fontSize: 13, color: '#1A7A35', fontWeight: '600' },
+
+  errorCard: { backgroundColor: '#FFEBEE', borderRadius: 12, padding: 16, marginHorizontal: 16, alignItems: 'center' },
   errorText: { fontSize: 13, color: '#B71C1C', marginBottom: 10 },
-  retryBtn: {
-    backgroundColor: '#FFEBEE',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
+  retryBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   retryText: { fontSize: 13, color: '#B71C1C', fontWeight: '600' },
 
-  loader: { marginVertical: 16 },
-  bottomPad: { height: 32 },
+  loader: { marginVertical: 20 },
+  bottomPad: { height: 40 },
 });

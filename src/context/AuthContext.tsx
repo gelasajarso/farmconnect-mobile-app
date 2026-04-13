@@ -68,14 +68,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await storeTokens(response.access_token, response.refresh_token);
 
     // Store user profile for hydration on next launch
+    const mockSystemUserId = (response as any)._mock_system_user_id ?? null;
     const profile: AuthUser = {
       keycloak_id: response.user.id,
       email: response.user.email,
       name: response.user.name,
       role: response.user.role as UserRole,
-      system_user_id: null, // resolved lazily from domain responses
+      system_user_id: mockSystemUserId,
     };
     await storeUserProfile(profile);
+    if (mockSystemUserId) {
+      await storeSystemUserId(mockSystemUserId);
+    }
 
     setUser(profile);
   }, []);
