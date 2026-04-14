@@ -41,7 +41,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen
         name="ProductList"
         component={HomeScreen}
-        options={{ title: "Marketplace" }}
+        options={{ headerShown: false }}
       />
       <HomeStack.Screen
         name="ProductDetail"

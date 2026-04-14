@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, SafeAreaView, Platform,
+  StyleSheet, SafeAreaView, Platform, RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -57,6 +57,13 @@ export default function FarmerProductsScreen() {
 
   const farmerId = user?.system_user_id ?? null;
   const { products, loading, error, refetch } = useFarmerProducts(farmerId);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   if (resolving || (loading && !farmerId)) return <LoadingIndicator />;
   if (resolveError) return <ErrorView message={resolveError} onRetry={() => setRetryCount(c => c + 1)} />;
@@ -85,6 +92,7 @@ export default function FarmerProductsScreen() {
         windowSize={5}
         maxToRenderPerBatch={10}
         removeClippedSubviews
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1A7A35" />}
         ListEmptyComponent={<EmptyState message="No products yet. Tap '+ Add' to create one." emoji="🌾" />}
         contentContainerStyle={products.length === 0 ? styles.emptyFlex : styles.listPad}
         showsVerticalScrollIndicator={false}

@@ -24,37 +24,45 @@ type LoginNavProp = StackNavigationProp<AuthStackParamList, "Login">;
 const { width, height } = Dimensions.get("window");
 
 const G = {
-  primary:   "#1A7A35",
-  light:     "#25D366",
-  surface:   "#F2FAF5",
-  border:    "#C8E6C9",
-  muted:     "#6B8F71",
-  text:      "#0D1B0F",
-  sub:       "#7A9E80",
-  error:     "#C62828",
-  errorBg:   "#FFEBEE",
-  white:     "#fff",
+  primary: "#1A7A35",
+  light: "#25D366",
+  surface: "#F2FAF5",
+  border: "#C8E6C9",
+  muted: "#6B8F71",
+  text: "#0D1B0F",
+  sub: "#7A9E80",
+  error: "#C62828",
+  errorBg: "#FFEBEE",
+  white: "#fff",
 };
 
 export default function LoginScreen() {
   const navigation = useNavigation<LoginNavProp>();
   const { login } = useAuth();
 
-  const [email, setEmail]               = useState("");
-  const [password, setPassword]         = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
-  const [passFocused, setPassFocused]   = useState(false);
-  const [emailError, setEmailError]     = useState("");
+  const [passFocused, setPassFocused] = useState(false);
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [apiError, setApiError]         = useState("");
-  const [loading, setLoading]           = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function validate(): boolean {
     let valid = true;
-    setEmailError(""); setPasswordError(""); setApiError("");
-    if (!email.trim())    { setEmailError("Email is required.");    valid = false; }
-    if (!password.trim()) { setPasswordError("Password is required."); valid = false; }
+    setEmailError("");
+    setPasswordError("");
+    setApiError("");
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      valid = false;
+    }
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      valid = false;
+    }
     return valid;
   }
 
@@ -65,9 +73,10 @@ export default function LoginScreen() {
       await login(email.trim(), password);
     } catch (err) {
       const e = extractApiError(err);
-      if (e.status === 401)     setApiError("Invalid email or password.");
-      else if (e.status === 0)  setApiError("Network error. Check your connection.");
-      else                      setApiError("Service unavailable. Please try again.");
+      if (e.status === 401) setApiError("Invalid email or password.");
+      else if (e.status === 0)
+        setApiError("Network error. Check your connection.");
+      else setApiError("Service unavailable. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +87,11 @@ export default function LoginScreen() {
       style={styles.root}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <StatusBar barStyle="light-content" translucent={false} backgroundColor="#1A7A35" />
+      <StatusBar
+        barStyle="light-content"
+        translucent={false}
+        backgroundColor="#1A7A35"
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -89,7 +102,9 @@ export default function LoginScreen() {
         {/* ── Hero ── */}
         <View style={styles.hero}>
           <Image
-            source={{ uri: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80" }}
+            source={{
+              uri: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80",
+            }}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -110,24 +125,25 @@ export default function LoginScreen() {
 
         {/* ── Form ── */}
         <View style={styles.content}>
-
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Access your FarmConnect account.</Text>
 
           {/* API error */}
           {apiError ? (
             <View style={styles.apiErrorBox}>
-              <Text style={styles.apiErrorText}>⚠  {apiError}</Text>
+              <Text style={styles.apiErrorText}>⚠ {apiError}</Text>
             </View>
           ) : null}
 
           {/* Email */}
           <Text style={styles.label}>Email</Text>
-          <View style={[
-            styles.inputRow,
-            emailFocused ? styles.inputFocused : null,
-            emailError   ? styles.inputError   : null,
-          ]}>
+          <View
+            style={[
+              styles.inputRow,
+              emailFocused ? styles.inputFocused : null,
+              emailError ? styles.inputError : null,
+            ]}
+          >
             <Text style={styles.inputIcon}>✉</Text>
             <TextInput
               style={styles.input}
@@ -143,15 +159,19 @@ export default function LoginScreen() {
               onBlur={() => setEmailFocused(false)}
             />
           </View>
-          {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
+          {emailError ? (
+            <Text style={styles.fieldError}>{emailError}</Text>
+          ) : null}
 
           {/* Password */}
           <Text style={styles.label}>Password</Text>
-          <View style={[
-            styles.inputRow,
-            passFocused   ? styles.inputFocused : null,
-            passwordError ? styles.inputError   : null,
-          ]}>
+          <View
+            style={[
+              styles.inputRow,
+              passFocused ? styles.inputFocused : null,
+              passwordError ? styles.inputError : null,
+            ]}
+          >
             <Text style={styles.inputIcon}>🔒</Text>
             <TextInput
               style={styles.input}
@@ -165,13 +185,17 @@ export default function LoginScreen() {
               onBlur={() => setPassFocused(false)}
             />
             <TouchableOpacity
-              onPress={() => setShowPassword(v => !v)}
+              onPress={() => setShowPassword((v) => !v)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.showToggle}>{showPassword ? "Hide" : "Show"}</Text>
+              <Text style={styles.showToggle}>
+                {showPassword ? "Hide" : "Show"}
+              </Text>
             </TouchableOpacity>
           </View>
-          {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
+          {passwordError ? (
+            <Text style={styles.fieldError}>{passwordError}</Text>
+          ) : null}
 
           {/* Log In */}
           <TouchableOpacity
@@ -180,10 +204,11 @@ export default function LoginScreen() {
             disabled={loading}
             activeOpacity={0.85}
           >
-            {loading
-              ? <ActivityIndicator color={G.white} />
-              : <Text style={styles.loginBtnText}>Log In</Text>
-            }
+            {loading ? (
+              <ActivityIndicator color={G.white} />
+            ) : (
+              <Text style={styles.loginBtnText}>Log In</Text>
+            )}
           </TouchableOpacity>
 
           {/* Forgot password */}
@@ -201,7 +226,6 @@ export default function LoginScreen() {
               <Text style={styles.signupLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -209,7 +233,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: G.white },
+  root: { flex: 1, backgroundColor: G.white },
   scroll: { flexGrow: 1, backgroundColor: G.white },
 
   // ── Hero ──────────────────────────────────────────────────────────────────

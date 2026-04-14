@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, Platform,
+  StyleSheet, SafeAreaView, ActivityIndicator, Platform, RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 import { useFarmerProducts } from '../hooks/useProducts';
 import { getOrders } from '../services/order.service';
 import { extractApiError } from '../utils/errorHandling';
-import { PRODUCT_STATUS_LABELS, CATEGORY_LABELS } from '../utils/enumLabels';
-import type { FarmerTabParamList } from '../navigation/types';
+import { PRODUCT_STATUS_LABELS, CATEGORY_LABELS, ORDER_STATUS_LABELS } from '../utils/enumLabels';
+import type { FarmerStackParamList } from '../navigation/types';
 import type { ProductPublicDTO, OrderDTO, ProductStatus } from '../types';
-import { ORDER_STATUS_LABELS } from '../utils/enumLabels';
 
-type DashNavProp = BottomTabNavigationProp<FarmerTabParamList>;
+type DashNavProp = StackNavigationProp<FarmerStackParamList, 'FarmerDashboard'>;
 
 const STATUS_COLORS: Record<ProductStatus, string> = {
   AVAILABLE: '#1A7A35', LOW_STOCK: '#E65100',
@@ -25,35 +24,52 @@ export default function FarmerDashboardScreen() {
   const navigation = useNavigation<DashNavProp>();
   const { user, logout } = useAuth();
   const farmerId = user?.system_user_id ?? null;
-  const { products, loading: productsLoading } = useFarmerProducts(farmerId);
+  const { products, loading: productsLoading, refetch: refetchProducts } = useFarmerProducts(farmerId);
   const [recentOrders, setRecentOrders] = useState<OrderDTO[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      setOrdersLoading(true);
-      try {
-        const data = await getOrders();
-        setRecentOrders(data.slice(0, 3));
-      } catch (err) {
-        setOrdersError(extractApiError(err).message);
-      } finally {
-        setOrdersLoading(false);
-      }
-    })();
-  }, []);
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    setOrdersError('');
+    try {
+      const data = await getOrders();
+      // Filter to only this farmer's orders
+      const mine = farmerId
+        ? data.filter(o => o.farmer_id === farmerId)
+        : data;
+      setRecentOrders(mine.slice(0, 3));
+    } catch (err) {
+      setOrdersError(extractApiError(err).message);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [farmerId]);
 
-  const totalProducts   = products.length;
-  const activeProducts  = products.filter(p => p.is_active).length;
-  const lowStock        = products.filter(p => p.status === 'LOW_STOCK').length;
-  const soldOut         = products.filter(p => p.status === 'SOLD_OUT').length;
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchProducts(), fetchOrders()]);
+    setRefreshing(false);
+  }, [refetchProducts, fetchOrders]);
+
+  const stats = useMemo(() => ({
+    total:   products.length,
+    active:  products.filter(p => p.is_active).length,
+    lowStock: products.filter(p => p.status === 'LOW_STOCK').length,
+    soldOut:  products.filter(p => p.status === 'SOLD_OUT').length,
+  }), [products]);
 
   const initials = (user?.name ?? 'F').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1A7A35" />}
+      >
 
         {/* Header */}
         <View style={styles.header}>
@@ -69,36 +85,44 @@ export default function FarmerDashboardScreen() {
 
         {/* Stats */}
         <View style={styles.statsGrid}>
-          <StatCard label="Total" value={totalProducts}  color="#1A7A35" bg="#F0FBF3" loading={productsLoading} />
-          <StatCard label="Active"    value={activeProducts}  color="#1A7A35" bg="#F0FBF3" loading={productsLoading} />
-          <StatCard label="Low Stock" value={lowStock}        color="#E65100" bg="#FFF3E0" loading={productsLoading} />
-          <StatCard label="Sold Out"  value={soldOut}         color="#B71C1C" bg="#FFEBEE" loading={productsLoading} />
+          <StatCard label="Total"     value={stats.total}    color="#1A7A35" bg="#F0FBF3" loading={productsLoading} />
+          <StatCard label="Active"    value={stats.active}   color="#1A7A35" bg="#F0FBF3" loading={productsLoading} />
+          <StatCard label="Low Stock" value={stats.lowStock} color="#E65100" bg="#FFF3E0" loading={productsLoading} />
+          <StatCard label="Sold Out"  value={stats.soldOut}  color="#B71C1C" bg="#FFEBEE" loading={productsLoading} />
         </View>
 
         {/* Quick Actions */}
         <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <ActionCard label="My Products" emoji="🌾" onPress={() => navigation.navigate('FarmerProductsStack')} />
-          <ActionCard label="Add Product" emoji="➕"  onPress={() => navigation.navigate('FarmerProductsStack')} />
-          <ActionCard label="Marketplace" emoji="🛒"  onPress={() => navigation.navigate('HomeStack')} />
+          <ActionCard label="My Products" emoji="🌾" onPress={() => navigation.navigate('FarmerProductsList')} />
+          <ActionCard label="Add Product" emoji="➕"  onPress={() => navigation.navigate('AddProduct')} />
+          <ActionCard label="Marketplace" emoji="🛒"  onPress={() => navigation.getParent()?.navigate('HomeStack')} />
         </View>
 
         {/* Recent Listings */}
-        <SectionHeader title="Recent Listings" onSeeAll={() => navigation.navigate('FarmerProductsStack')} />
+        <SectionHeader title="Recent Listings" onSeeAll={() => navigation.navigate('FarmerProductsList')} />
         {productsLoading ? (
           <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : products.length === 0 ? (
-          <EmptyCard message="No products yet." cta="Add your first product →" onCta={() => navigation.navigate('FarmerProductsStack')} />
+          <EmptyCard message="No products yet." cta="Add your first product →" onCta={() => navigation.navigate('AddProduct')} />
         ) : (
           products.slice(0, 3).map(p => <ProductRow key={p.id} product={p} />)
         )}
 
         {/* Recent Orders */}
-        <SectionHeader title="Recent Orders" />
+        <SectionHeader
+          title="Recent Orders"
+          onSeeAll={ordersError ? undefined : undefined}
+        />
         {ordersLoading ? (
           <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : ordersError ? (
-          <View style={styles.errorCard}><Text style={styles.errorText}>{ordersError}</Text></View>
+          <View style={styles.errorCard}>
+            <Text style={styles.errorText}>{ordersError}</Text>
+            <TouchableOpacity onPress={fetchOrders} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         ) : recentOrders.length === 0 ? (
           <EmptyCard message="No orders received yet." />
         ) : (
@@ -274,8 +298,10 @@ const styles = StyleSheet.create({
   emptyBtn: { backgroundColor: '#F0FBF3', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   emptyBtnText: { fontSize: 13, color: '#1A7A35', fontWeight: '600' },
 
-  errorCard: { backgroundColor: '#FFEBEE', borderRadius: 12, padding: 16, marginHorizontal: 16 },
-  errorText: { fontSize: 13, color: '#B71C1C', textAlign: 'center' },
+  errorCard: { backgroundColor: '#FFEBEE', borderRadius: 12, padding: 16, marginHorizontal: 16, alignItems: 'center' },
+  errorText: { fontSize: 13, color: '#B71C1C', textAlign: 'center', marginBottom: 10 },
+  retryBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
+  retryText: { fontSize: 13, color: '#B71C1C', fontWeight: '600' },
 
   loader: { marginVertical: 20 },
   bottomPad: { height: 40 },
