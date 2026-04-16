@@ -7,25 +7,15 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-
-type NotifType = 'order' | 'delivery' | 'product' | 'system';
-
-interface Notification {
-  id: string;
-  type: NotifType;
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-}
+import type { Notification, NotifType } from '../types';
 
 // Static placeholder data — replace with API when backend supports it
 const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: '1', type: 'order', title: 'New Order Received', body: 'You have a new order for Organic Tomatoes.', time: '2 min ago', read: false },
-  { id: '2', type: 'delivery', title: 'Delivery In Transit', body: 'Order #A3F9 is now in transit.', time: '1 hr ago', read: false },
-  { id: '3', type: 'product', title: 'Low Stock Alert', body: 'Your product "Maize Grain" is running low.', time: '3 hr ago', read: true },
-  { id: '4', type: 'order', title: 'Order Completed', body: 'Order #B2E1 has been completed successfully.', time: 'Yesterday', read: true },
-  { id: '5', type: 'system', title: 'Welcome to FarmConnect', body: 'Your account is active. Start listing your products.', time: '2 days ago', read: true },
+  { id: '1', type: 'order', title: 'New Order Received', body: 'You have a new order for Organic Tomatoes.', timestamp: '2026-04-11T11:58:00Z', read: false },
+  { id: '2', type: 'delivery', title: 'Delivery In Transit', body: 'Order #A3F9 is now in transit.', timestamp: '2026-04-11T11:00:00Z', read: false },
+  { id: '3', type: 'product', title: 'Low Stock Alert', body: 'Your product "Maize Grain" is running low.', timestamp: '2026-04-11T09:00:00Z', read: true },
+  { id: '4', type: 'order', title: 'Order Completed', body: 'Order #B2E1 has been completed successfully.', timestamp: '2026-04-10T12:00:00Z', read: true },
+  { id: '5', type: 'system', title: 'Welcome to FarmConnect', body: 'Your account is active. Start listing your products.', timestamp: '2026-04-09T08:00:00Z', read: true },
 ];
 
 const TYPE_CONFIG: Record<NotifType, { emoji: string; color: string }> = {
@@ -102,7 +92,7 @@ function NotifCard({ item, onPress }: { item: Notification; onPress: () => void 
           <Text style={[styles.cardTitle, !item.read && styles.cardTitleUnread]} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={styles.cardTime}>{item.time}</Text>
+          <Text style={styles.cardTime}>{item.timestamp}</Text>
         </View>
         <Text style={styles.cardText} numberOfLines={2}>{item.body}</Text>
       </View>

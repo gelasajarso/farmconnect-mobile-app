@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, SafeAreaView, Platform, RefreshControl,
+  StyleSheet, SafeAreaView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 import { useFarmerProducts } from '../hooks/useProducts';
 import { getOrders } from '../services/order.service';
+import { deleteProduct, updateProduct } from '../services/product.service';
 import { extractApiError } from '../utils/errorHandling';
 import { CATEGORY_LABELS, PRODUCT_STATUS_LABELS } from '../utils/enumLabels';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -58,12 +59,49 @@ export default function FarmerProductsScreen() {
   const farmerId = user?.system_user_id ?? null;
   const { products, loading, error, refetch } = useFarmerProducts(farmerId);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   }, [refetch]);
+
+  function handleDelete(product: ProductPublicDTO) {
+    if (!farmerId) return;
+    Alert.alert(
+      'Delete Product',
+      `Delete "${product.name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingId(product.id);
+            try {
+              await deleteProduct(product.id, farmerId);
+              await refetch();
+            } catch (err) {
+              Alert.alert('Error', extractApiError(err).message);
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleToggleActive(product: ProductPublicDTO) {
+    if (!farmerId) return;
+    try {
+      await updateProduct(product.id, farmerId, { is_active: !product.is_active });
+      await refetch();
+    } catch (err) {
+      Alert.alert('Error', extractApiError(err).message);
+    }
+  }
 
   if (resolving || (loading && !farmerId)) return <LoadingIndicator />;
   if (resolveError) return <ErrorView message={resolveError} onRetry={() => setRetryCount(c => c + 1)} />;
@@ -87,7 +125,14 @@ export default function FarmerProductsScreen() {
       <FlatList<ProductPublicDTO>
         data={products}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => <ProductItem item={item} />}
+        renderItem={({ item }) => (
+          <ProductItem
+            item={item}
+            deleting={deletingId === item.id}
+            onDelete={() => handleDelete(item)}
+            onToggleActive={() => handleToggleActive(item)}
+          />
+        )}
         initialNumToRender={10}
         windowSize={5}
         maxToRenderPerBatch={10}
@@ -101,7 +146,17 @@ export default function FarmerProductsScreen() {
   );
 }
 
-function ProductItem({ item }: { item: ProductPublicDTO }) {
+function ProductItem({
+  item,
+  deleting,
+  onDelete,
+  onToggleActive,
+}: {
+  item: ProductPublicDTO;
+  deleting: boolean;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}) {
   const sc = item.status ? STATUS_COLORS[item.status] : STATUS_COLORS.AVAILABLE;
   return (
     <View style={styles.card}>
@@ -118,6 +173,7 @@ function ProductItem({ item }: { item: ProductPublicDTO }) {
           <Text style={styles.qty}>Qty: {item.total_quantity}</Text>
         </View>
       </View>
+
       {item.status && (
         <View style={styles.cardFooter}>
           <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
@@ -126,6 +182,29 @@ function ProductItem({ item }: { item: ProductPublicDTO }) {
           {item.harvest_date && <Text style={styles.date}>Harvested: {item.harvest_date}</Text>}
         </View>
       )}
+
+      {/* Actions */}
+      <View style={styles.actionsRow}>
+        <TouchableOpacity
+          style={[styles.actionBtn, item.is_active ? styles.actionBtnWarning : styles.actionBtnSuccess]}
+          onPress={onToggleActive}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.actionBtnText, item.is_active ? styles.actionBtnTextWarning : styles.actionBtnTextSuccess]}>
+            {item.is_active ? 'Deactivate' : 'Activate'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.actionBtnDanger, deleting && styles.actionBtnDisabled]}
+          onPress={onDelete}
+          disabled={deleting}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>
+            {deleting ? 'Deleting…' : 'Delete'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -181,4 +260,18 @@ const styles = StyleSheet.create({
   statusBadge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
   statusText: { fontSize: 12, fontWeight: '700' },
   date: { fontSize: 11, color: '#9E9E9E' },
+
+  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  actionBtn: {
+    flex: 1, paddingVertical: 8, borderRadius: 10,
+    alignItems: 'center', borderWidth: 1,
+  },
+  actionBtnSuccess: { backgroundColor: '#F0FBF3', borderColor: '#C8E6C9' },
+  actionBtnWarning: { backgroundColor: '#FFF8E1', borderColor: '#FFE082' },
+  actionBtnDanger:  { backgroundColor: '#FFF0F0', borderColor: '#FFCDD2' },
+  actionBtnDisabled: { opacity: 0.5 },
+  actionBtnText:        { fontSize: 12, fontWeight: '700' },
+  actionBtnTextSuccess: { color: '#1A7A35' },
+  actionBtnTextWarning: { color: '#F57F17' },
+  actionBtnTextDanger:  { color: '#B71C1C' },
 });

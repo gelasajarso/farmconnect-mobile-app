@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "../components/NotificationBell";
 import type {
   FarmerTabParamList,
   MerchantTabParamList,
@@ -26,6 +27,10 @@ import DeliveryAssignmentsScreen from "../screens/DeliveryAssignmentsScreen";
 import DeliveryDashboardScreen from "../screens/DeliveryDashboardScreen";
 import NotAuthorizedScreen from "../screens/NotAuthorizedScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
+import AdminUsersScreen from "../screens/AdminUsersScreen";
+import AdminProductsScreen from "../screens/AdminProductsScreen";
+import AdminOrdersScreen from "../screens/AdminOrdersScreen";
+import AdminDeliveriesScreen from "../screens/AdminDeliveriesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
@@ -55,7 +60,9 @@ function HomeStackNavigator() {
 const FarmerStack = createStackNavigator<FarmerStackParamList>();
 function FarmerStackNavigator() {
   return (
-    <FarmerStack.Navigator>
+    <FarmerStack.Navigator
+      screenOptions={{ headerRight: () => <NotificationBell /> }}
+    >
       <FarmerStack.Screen
         name="FarmerDashboard"
         component={FarmerDashboardScreen}
@@ -113,7 +120,9 @@ function FarmerNavigator() {
 const MerchantStack = createStackNavigator<MerchantStackParamList>();
 function MerchantStackNavigator() {
   return (
-    <MerchantStack.Navigator>
+    <MerchantStack.Navigator
+      screenOptions={{ headerRight: () => <NotificationBell /> }}
+    >
       <MerchantStack.Screen
         name="MerchantDashboard"
         component={MerchantDashboardScreen}
@@ -174,7 +183,9 @@ function MerchantNavigator() {
 const DeliveryStack = createStackNavigator<DeliveryStackParamList>();
 function DeliveryStackNavigator() {
   return (
-    <DeliveryStack.Navigator>
+    <DeliveryStack.Navigator
+      screenOptions={{ headerRight: () => <NotificationBell /> }}
+    >
       <DeliveryStack.Screen
         name="DeliveryDashboard"
         component={DeliveryDashboardScreen}
@@ -225,11 +236,33 @@ function DeliveryNavigator() {
 const AdminStack = createStackNavigator<AdminStackParamList>();
 function AdminStackNavigator() {
   return (
-    <AdminStack.Navigator>
+    <AdminStack.Navigator
+      screenOptions={{ headerRight: () => <NotificationBell /> }}
+    >
       <AdminStack.Screen
         name="AdminDashboard"
         component={AdminDashboardScreen}
         options={{ headerShown: false }}
+      />
+      <AdminStack.Screen
+        name="AdminUsers"
+        component={AdminUsersScreen}
+        options={{ title: "Users" }}
+      />
+      <AdminStack.Screen
+        name="AdminProducts"
+        component={AdminProductsScreen}
+        options={{ title: "Products" }}
+      />
+      <AdminStack.Screen
+        name="AdminOrders"
+        component={AdminOrdersScreen}
+        options={{ title: "Orders" }}
+      />
+      <AdminStack.Screen
+        name="AdminDeliveries"
+        component={AdminDeliveriesScreen}
+        options={{ title: "Deliveries" }}
       />
       <AdminStack.Screen
         name="Profile"

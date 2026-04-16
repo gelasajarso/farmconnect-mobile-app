@@ -70,6 +70,20 @@ export const MOCK_USERS: Record<string, LoginResponse> = {
 // Default password for all mock users
 export const MOCK_PASSWORD = '12345678';
 
+// ─── Admin Users List (for admin panel) ──────────────────────────────────────
+
+import type { AdminUser } from '../types';
+
+export const MOCK_ADMIN_USERS: AdminUser[] = [
+  { id: 'kc-admin-001',    email: 'admin@farmconnect.com',    name: 'Admin User',    role: 'ADMIN',    system_user_id: null,        created_at: '2026-01-01T00:00:00Z', is_active: true },
+  { id: 'kc-farmer-001',   email: 'farmer@farmconnect.com',   name: 'John Mwangi',   role: 'FARMER',   system_user_id: 'FAR-00001', created_at: '2026-01-10T08:00:00Z', is_active: true },
+  { id: 'kc-farmer-002',   email: 'farmer@test.com',          name: 'Test Farmer',   role: 'FARMER',   system_user_id: null,        created_at: '2026-02-01T09:00:00Z', is_active: true },
+  { id: 'kc-merchant-001', email: 'merchant@farmconnect.com', name: 'Amina Osei',    role: 'MERCHANT', system_user_id: 'MER-00001', created_at: '2026-01-15T10:00:00Z', is_active: true },
+  { id: 'kc-merchant-002', email: 'merchant@test.com',        name: 'Test Merchant', role: 'MERCHANT', system_user_id: null,        created_at: '2026-02-05T11:00:00Z', is_active: true },
+  { id: 'kc-delivery-001', email: 'delivery@farmconnect.com', name: 'Kwame Asante',  role: 'DELIVERY', system_user_id: 'DEL-00001', created_at: '2026-01-20T07:00:00Z', is_active: true },
+  { id: 'kc-delivery-002', email: 'delivery@test.com',        name: 'Test Delivery', role: 'DELIVERY', system_user_id: null,        created_at: '2026-02-10T08:00:00Z', is_active: true },
+];
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export const MOCK_CATALOG: CatalogItem[] = [

@@ -54,6 +54,10 @@ export type DeliveryTabParamList = {
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
+  AdminUsers: undefined;
+  AdminProducts: undefined;
+  AdminOrders: undefined;
+  AdminDeliveries: undefined;
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;

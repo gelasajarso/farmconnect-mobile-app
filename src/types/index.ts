@@ -194,9 +194,56 @@ export interface OrderEscrowPair {
   escrow: EscrowDTO;
 }
 
-// ─── Delivery ─────────────────────────────────────────────────────────────────
+// ─── Notifications ────────────────────────────────────────────────────────────
 
-export interface DeliveryResponse {
+export type NotifType = 'order' | 'delivery' | 'product' | 'system';
+
+export interface Notification {
+  id: string;
+  type: NotifType;
+  title: string;
+  body: string;
+  timestamp: string;   // ISO 8601, e.g. "2026-04-11T11:00:00Z"
+  read: boolean;
+}
+
+export interface NotificationContextValue {
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  clearAll: () => void;
+}
+
+export interface ProductUpdate {
+  name?: string;
+  description?: string;
+  base_price?: number;
+  total_quantity?: number;
+  quality_grade?: QualityGrade;
+  harvest_date?: string;
+  expiry_date?: string;
+  is_active?: boolean;
+}
+
+export interface DeliveryStatusUpdate {
+  status: DeliveryStatus;
+  notes?: string;
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  system_user_id: string | null;
+  created_at: string;
+  is_active: boolean;
+}
+
+// ─── Delivery ─────────────────────────────────────────────────────────────────
   id: string;
   order_id: string;
   carrier_id: string;

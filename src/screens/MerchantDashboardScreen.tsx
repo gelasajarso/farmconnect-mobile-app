@@ -22,7 +22,10 @@ const STATUS_COLORS: Partial<Record<OrderStatus, string>> = {
 export default function MerchantDashboardScreen() {
   const navigation = useNavigation<DashNavProp>();
   const { user, logout } = useAuth();
-  const { orders, loading, error, refetch } = useOrders();
+  const { orders, loading, error, refetch } = useOrders({
+    filterField: 'merchant_id',
+    filterById: user?.system_user_id ?? null,
+  });
 
   const stats = useMemo(() => {
     const total     = orders.length;
