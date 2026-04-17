@@ -97,6 +97,7 @@ export default function FarmerDashboardScreen() {
           <ActionCard label="My Products" emoji="🌾" onPress={() => navigation.navigate('FarmerProductsList')} />
           <ActionCard label="Add Product" emoji="➕"  onPress={() => navigation.navigate('AddProduct')} />
           <ActionCard label="Marketplace" emoji="🛒"  onPress={() => navigation.getParent()?.navigate('HomeStack')} />
+          <ActionCard label="Profile"     emoji="👤"  onPress={() => navigation.navigate('Profile')} />
         </View>
 
         {/* Recent Listings */}

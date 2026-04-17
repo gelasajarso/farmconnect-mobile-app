@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { useAuth } from "../context/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
 import NotificationBell from "../components/NotificationBell";
 import type {
   FarmerTabParamList,
@@ -36,6 +37,12 @@ import SettingsScreen from "../screens/SettingsScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import TransactionDetailScreen from "../screens/TransactionDetailScreen";
+import SelectPaymentScreen from "../screens/payment/SelectPaymentScreen";
+import PaymentProcessingScreen from "../screens/payment/PaymentProcessingScreen";
+import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+import BankTransferScreen from "../screens/payment/BankTransferScreen";
+import ChatListScreen from "../screens/chat/ChatListScreen";
+import ChatDetailScreen from "../screens/chat/ChatDetailScreen";
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -93,7 +100,41 @@ function FarmerStackNavigator() {
         component={NotificationsScreen}
         options={{ title: "Notifications" }}
       />
+      <FarmerStack.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{ title: "Messages" }}
+      />
+      <FarmerStack.Screen
+        name="ChatDetail"
+        component={ChatDetailScreen}
+        options={({ route }) => ({ title: (route.params as any).participantName })}
+      />
     </FarmerStack.Navigator>
+  );
+}
+
+// ─── Shared Chat Stack ────────────────────────────────────────────────────────
+// Reused by all role navigators as the Chat tab
+
+import { createStackNavigator as createChatStack } from "@react-navigation/stack";
+import type { ChatStackParamList } from "../screens/chat/ChatListScreen";
+
+const ChatStack = createChatStack<ChatStackParamList>();
+function ChatStackNavigator() {
+  return (
+    <ChatStack.Navigator>
+      <ChatStack.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{ title: "Messages" }}
+      />
+      <ChatStack.Screen
+        name="ChatDetail"
+        component={ChatDetailScreen}
+        options={({ route }) => ({ title: route.params.participantName })}
+      />
+    </ChatStack.Navigator>
   );
 }
 
@@ -102,7 +143,20 @@ function FarmerStackNavigator() {
 const FarmerTab = createBottomTabNavigator<FarmerTabParamList>();
 function FarmerNavigator() {
   return (
-    <FarmerTab.Navigator>
+    <FarmerTab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+            HomeStack:           'storefront-outline',
+            FarmerProductsStack: 'leaf-outline',
+            ChatStack:           'chatbubble-ellipses-outline',
+          };
+          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+        },
+        tabBarActiveTintColor:   '#1A7A35',
+        tabBarInactiveTintColor: '#9E9E9E',
+      })}
+    >
       <FarmerTab.Screen
         name="HomeStack"
         component={HomeStackNavigator}
@@ -112,6 +166,11 @@ function FarmerNavigator() {
         name="FarmerProductsStack"
         component={FarmerStackNavigator}
         options={{ title: "My Products", headerShown: false }}
+      />
+      <FarmerTab.Screen
+        name="ChatStack"
+        component={ChatStackNavigator}
+        options={{ title: "Messages", headerShown: false }}
       />
     </FarmerTab.Navigator>
   );
@@ -144,6 +203,26 @@ function MerchantStackNavigator() {
         options={{ title: "Transaction Detail" }}
       />
       <MerchantStack.Screen
+        name="SelectPayment"
+        component={SelectPaymentScreen}
+        options={{ title: "Payment Method" }}
+      />
+      <MerchantStack.Screen
+        name="PaymentProcessing"
+        component={PaymentProcessingScreen}
+        options={{ title: "Processing Payment", headerLeft: () => null, gestureEnabled: false }}
+      />
+      <MerchantStack.Screen
+        name="PaymentResult"
+        component={PaymentResultScreen}
+        options={{ title: "Payment Result", headerLeft: () => null, gestureEnabled: false }}
+      />
+      <MerchantStack.Screen
+        name="BankTransfer"
+        component={BankTransferScreen}
+        options={{ title: "Bank Transfer" }}
+      />
+      <MerchantStack.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: "Profile" }}
@@ -165,7 +244,20 @@ function MerchantStackNavigator() {
 const MerchantTab = createBottomTabNavigator<MerchantTabParamList>();
 function MerchantNavigator() {
   return (
-    <MerchantTab.Navigator>
+    <MerchantTab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+            HomeStack:     'storefront-outline',
+            MerchantStack: 'bag-handle-outline',
+            ChatStack:     'chatbubble-ellipses-outline',
+          };
+          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+        },
+        tabBarActiveTintColor:   '#1A7A35',
+        tabBarInactiveTintColor: '#9E9E9E',
+      })}
+    >
       <MerchantTab.Screen
         name="HomeStack"
         component={HomeStackNavigator}
@@ -175,6 +267,11 @@ function MerchantNavigator() {
         name="MerchantStack"
         component={MerchantStackNavigator}
         options={{ title: "My Orders", headerShown: false }}
+      />
+      <MerchantTab.Screen
+        name="ChatStack"
+        component={ChatStackNavigator}
+        options={{ title: "Messages", headerShown: false }}
       />
     </MerchantTab.Navigator>
   );
@@ -218,7 +315,20 @@ function DeliveryStackNavigator() {
 const DeliveryTab = createBottomTabNavigator<DeliveryTabParamList>();
 function DeliveryNavigator() {
   return (
-    <DeliveryTab.Navigator>
+    <DeliveryTab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+            HomeStack:     'storefront-outline',
+            DeliveryStack: 'bicycle-outline',
+            ChatStack:     'chatbubble-ellipses-outline',
+          };
+          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+        },
+        tabBarActiveTintColor:   '#1A7A35',
+        tabBarInactiveTintColor: '#9E9E9E',
+      })}
+    >
       <DeliveryTab.Screen
         name="HomeStack"
         component={HomeStackNavigator}
@@ -228,6 +338,11 @@ function DeliveryNavigator() {
         name="DeliveryStack"
         component={DeliveryStackNavigator}
         options={{ title: "Deliveries", headerShown: false }}
+      />
+      <DeliveryTab.Screen
+        name="ChatStack"
+        component={ChatStackNavigator}
+        options={{ title: "Messages", headerShown: false }}
       />
     </DeliveryTab.Navigator>
   );
@@ -286,7 +401,20 @@ function AdminStackNavigator() {
 const AdminTab = createBottomTabNavigator<AdminTabParamList>();
 function AdminNavigator() {
   return (
-    <AdminTab.Navigator>
+    <AdminTab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+            HomeStack:  'storefront-outline',
+            AdminStack: 'shield-checkmark-outline',
+            ChatStack:  'chatbubble-ellipses-outline',
+          };
+          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+        },
+        tabBarActiveTintColor:   '#1A7A35',
+        tabBarInactiveTintColor: '#9E9E9E',
+      })}
+    >
       <AdminTab.Screen
         name="HomeStack"
         component={HomeStackNavigator}
@@ -296,6 +424,11 @@ function AdminNavigator() {
         name="AdminStack"
         component={AdminStackNavigator}
         options={{ title: "Admin", headerShown: false }}
+      />
+      <AdminTab.Screen
+        name="ChatStack"
+        component={ChatStackNavigator}
+        options={{ title: "Messages", headerShown: false }}
       />
     </AdminTab.Navigator>
   );

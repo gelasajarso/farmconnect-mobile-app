@@ -90,6 +90,7 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   resolveSystemUserId: (id: string) => Promise<void>;
+  updateProfile: (updates: { name: string; email: string }) => Promise<void>;
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -244,6 +245,8 @@ export interface AdminUser {
 }
 
 // ─── Delivery ─────────────────────────────────────────────────────────────────
+
+export interface DeliveryResponse {
   id: string;
   order_id: string;
   carrier_id: string;

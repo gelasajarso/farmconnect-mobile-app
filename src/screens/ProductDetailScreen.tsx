@@ -23,7 +23,7 @@ import {
 } from '../utils/enumLabels';
 import LoadingIndicator from '../components/LoadingIndicator';
 import ErrorView from '../components/ErrorView';
-import type { HomeStackParamList } from '../navigation/types';
+import type { HomeStackParamList, MerchantStackParamList } from '../navigation/types';
 
 type DetailNavProp = StackNavigationProp<HomeStackParamList, 'ProductDetail'>;
 type DetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
@@ -80,12 +80,24 @@ export default function ProductDetailScreen() {
         quantity: qty,
         unit_price: product!.base_price,
       });
-      // Resolve system_user_id from the response
       await resolveSystemUserId(result.order.merchant_id);
-      Alert.alert(
-        'Order Placed',
-        `Order ID: ${result.order.id}\nTotal: ${result.order.total_price?.toFixed(2) ?? 'N/A'} ${product!.currency}`
-      );
+
+      // Navigate to payment flow instead of showing alert
+      const parentNav = navigation.getParent<StackNavigationProp<MerchantStackParamList>>();
+      if (parentNav) {
+        parentNav.navigate('SelectPayment', {
+          paymentParams: {
+            order_id:       result.order.id,
+            amount:         result.order.total_price,
+            currency:       'ETB',
+            product_name:   product!.name,
+            merchant_name:  user.name,
+            merchant_email: user.email,
+          },
+        });
+      } else {
+        Alert.alert('Order Placed', `Order #${result.order.id.slice(-8).toUpperCase()} created. Proceed to payment from My Orders.`);
+      }
       setQuantity('');
     } catch (err) {
       const apiErr = extractApiError(err);

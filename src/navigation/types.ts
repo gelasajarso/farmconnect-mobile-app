@@ -1,3 +1,5 @@
+import type { PaymentProvider, PaymentStatus, PaymentInitParams } from './payment';
+
 export type AuthStackParamList = {
   Landing: undefined;
   Login: undefined;
@@ -14,6 +16,8 @@ export type FarmerStackParamList = {
   FarmerDashboard: undefined;
   FarmerProductsList: undefined;
   AddProduct: undefined;
+  ChatList: undefined;
+  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -22,6 +26,7 @@ export type FarmerStackParamList = {
 export type FarmerTabParamList = {
   HomeStack: undefined;
   FarmerProductsStack: undefined;
+  ChatStack: undefined;
 };
 
 export type MerchantStackParamList = {
@@ -29,6 +34,22 @@ export type MerchantStackParamList = {
   MerchantOrdersList: undefined;
   TransactionHistory: undefined;
   TransactionDetail: { orderId: string };
+  // ── Payment flow ──
+  SelectPayment: { paymentParams: PaymentInitParams };
+  PaymentProcessing: { provider: PaymentProvider; paymentParams: PaymentInitParams };
+  PaymentResult: {
+    status: PaymentStatus;
+    provider: PaymentProvider;
+    amount: number;
+    order_id: string;
+    reference: string | null;
+    message: string;
+  };
+  BankTransfer: { paymentParams: PaymentInitParams };
+  // ── Chat ──
+  ChatList: undefined;
+  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
+  // ─────────────────
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -37,11 +58,14 @@ export type MerchantStackParamList = {
 export type MerchantTabParamList = {
   HomeStack: undefined;
   MerchantStack: undefined;
+  ChatStack: undefined;
 };
 
 export type DeliveryStackParamList = {
   DeliveryDashboard: undefined;
   DeliveryAssignmentsList: undefined;
+  ChatList: undefined;
+  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -50,6 +74,7 @@ export type DeliveryStackParamList = {
 export type DeliveryTabParamList = {
   HomeStack: undefined;
   DeliveryStack: undefined;
+  ChatStack: undefined;
 };
 
 export type AdminStackParamList = {
@@ -58,6 +83,8 @@ export type AdminStackParamList = {
   AdminProducts: undefined;
   AdminOrders: undefined;
   AdminDeliveries: undefined;
+  ChatList: undefined;
+  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -66,4 +93,5 @@ export type AdminStackParamList = {
 export type AdminTabParamList = {
   HomeStack: undefined;
   AdminStack: undefined;
+  ChatStack: undefined;
 };

@@ -101,9 +101,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await storeSystemUserId(id);
   }, []);
 
+  const updateProfile = useCallback(async (updates: { name: string; email: string }) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      return { ...prev, name: updates.name, email: updates.email };
+    });
+    // Persist updated profile to secure storage
+    const current = await getStoredUserProfile();
+    if (current) {
+      await storeUserProfile({
+        ...current,
+        name: updates.name,
+        email: updates.email,
+        system_user_id: null,
+      });
+    }
+    // Real API: await api.patch('/users/me', updates)
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, login, logout, resolveSystemUserId }}
+      value={{ user, isLoading, login, logout, resolveSystemUserId, updateProfile }}
     >
       {children}
     </AuthContext.Provider>

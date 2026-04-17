@@ -4,20 +4,27 @@ import {
   StyleSheet, SafeAreaView, ActivityIndicator, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../hooks/useOrders';
 import { ORDER_STATUS_LABELS } from '../utils/enumLabels';
-import type { MerchantTabParamList } from '../navigation/types';
+import type { MerchantTabParamList, MerchantStackParamList } from '../navigation/types';
 import type { OrderDTO, OrderStatus } from '../types';
 
-type DashNavProp = BottomTabNavigationProp<MerchantTabParamList>;
+type DashNavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MerchantTabParamList>,
+  StackNavigationProp<MerchantStackParamList>
+>;
 
 const STATUS_COLORS: Partial<Record<OrderStatus, string>> = {
   CREATED: '#1565C0', PENDING_PAYMENT: '#E65100', FUNDED: '#6A1B9A',
   CONFIRMED: '#1A7A35', IN_DELIVERY: '#00838F', DELIVERED: '#1A7A35',
   COMPLETED: '#1A7A35', CANCELLED: '#B71C1C', EXPIRED: '#757575',
 };
+
+const PAYABLE: OrderStatus[] = ['CREATED', 'PENDING_PAYMENT'];
 
 export default function MerchantDashboardScreen() {
   const navigation = useNavigation<DashNavProp>();
@@ -65,20 +72,22 @@ export default function MerchantDashboardScreen() {
 
         {/* Stats */}
         <View style={styles.statsGrid}>
-          <StatCard label="Total"     value={stats.total}     color="#1A7A35" bg="#F0FBF3" loading={loading} />
-          <StatCard label="Active"    value={stats.active}    color="#E65100" bg="#FFF3E0" loading={loading} />
-          <StatCard label="Completed" value={stats.completed} color="#1A7A35" bg="#F0FBF3" loading={loading} />
+          <StatCard label="Total"     value={stats.total}     color="#1A7A35" bg="#F0FBF3" loading={loading} onPress={() => navigation.navigate('MerchantOrdersList')} />
+          <StatCard label="Active"    value={stats.active}    color="#E65100" bg="#FFF3E0" loading={loading} onPress={() => navigation.navigate('MerchantOrdersList')} />
+          <StatCard label="Completed" value={stats.completed} color="#1A7A35" bg="#F0FBF3" loading={loading} onPress={() => navigation.navigate('TransactionHistory')} />
         </View>
 
         {/* Quick Actions */}
         <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <ActionCard emoji="🛒" label="Browse Market" onPress={() => navigation.navigate('HomeStack')} />
-          <ActionCard emoji="📦" label="My Orders"     onPress={() => navigation.navigate('MerchantStack')} />
+          <ActionCard emoji="🛒" label="Browse Market"    onPress={() => navigation.navigate('HomeStack')} />
+          <ActionCard emoji="📦" label="My Orders"        onPress={() => navigation.navigate('MerchantOrdersList')} />
+          <ActionCard emoji="💳" label="Transactions"     onPress={() => navigation.navigate('TransactionHistory')} />
+          <ActionCard emoji="👤" label="Profile"          onPress={() => navigation.navigate('Profile')} />
         </View>
 
         {/* Recent Orders */}
-        <SectionHeader title="Recent Orders" onSeeAll={() => navigation.navigate('MerchantStack')} />
+        <SectionHeader title="Recent Orders" onSeeAll={() => navigation.navigate('MerchantOrdersList')} />
         {loading ? (
           <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : error ? (
@@ -89,7 +98,23 @@ export default function MerchantDashboardScreen() {
         ) : orders.length === 0 ? (
           <EmptyCard message="No orders yet." cta="Browse the marketplace →" onCta={() => navigation.navigate('HomeStack')} />
         ) : (
-          orders.slice(0, 4).map(o => <OrderRow key={o.id} order={o} />)
+          orders.slice(0, 4).map(o => (
+            <OrderRow
+              key={o.id}
+              order={o}
+              onPress={() => navigation.navigate('MerchantOrdersList')}
+              onPay={PAYABLE.includes(o.status) ? () => navigation.navigate('SelectPayment', {
+                paymentParams: {
+                  order_id:       o.id,
+                  amount:         o.total_price,
+                  currency:       'ETB',
+                  product_name:   `Order #${o.id.slice(-8).toUpperCase()}`,
+                  merchant_name:  user?.name ?? '',
+                  merchant_email: user?.email ?? '',
+                },
+              }) : undefined}
+            />
+          ))
         )}
 
         <View style={styles.bottomPad} />
@@ -107,12 +132,14 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
   );
 }
 
-function StatCard({ label, value, color, bg, loading }: { label: string; value: number; color: string; bg: string; loading: boolean }) {
+function StatCard({ label, value, color, bg, loading, onPress }: {
+  label: string; value: number; color: string; bg: string; loading: boolean; onPress: () => void;
+}) {
   return (
-    <View style={[styles.statCard, { backgroundColor: bg }]}>
+    <TouchableOpacity style={[styles.statCard, { backgroundColor: bg }]} onPress={onPress} activeOpacity={0.75}>
       {loading ? <ActivityIndicator size="small" color={color} /> : <Text style={[styles.statValue, { color }]}>{value}</Text>}
       <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -125,21 +152,34 @@ function ActionCard({ emoji, label, onPress }: { emoji: string; label: string; o
   );
 }
 
-function OrderRow({ order }: { order: OrderDTO }) {
+function OrderRow({ order, onPress, onPay }: {
+  order: OrderDTO; onPress: () => void; onPay?: () => void;
+}) {
   const color = STATUS_COLORS[order.status] ?? '#757575';
   return (
-    <View style={styles.row}>
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
       <View style={styles.rowLeft}>
         <Text style={styles.rowTitle}>Order #{order.id.slice(-8).toUpperCase()}</Text>
         <Text style={styles.rowSub}>{new Date(order.created_at).toLocaleDateString()} · Qty {order.quantity}</Text>
       </View>
       <View style={styles.rowRight}>
-        <Text style={styles.rowPrice}>${order.total_price.toFixed(2)}</Text>
+        <Text style={styles.rowPrice}>ETB {order.total_price.toFixed(2)}</Text>
         <View style={[styles.badge, { backgroundColor: color + '18' }]}>
           <Text style={[styles.badgeText, { color }]}>{ORDER_STATUS_LABELS[order.status]}</Text>
         </View>
+        {onPay ? (
+          <TouchableOpacity
+            style={styles.rowPayBtn}
+            onPress={e => { e.stopPropagation?.(); onPay(); }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.rowPayBtnText}>💳 Pay</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.rowChevron}>›</Text>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -224,6 +264,12 @@ const styles = StyleSheet.create({
   rowPrice: { fontSize: 14, fontWeight: '800', color: '#1A7A35' },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4 },
   badgeText: { fontSize: 11, fontWeight: '600' },
+  rowChevron: { fontSize: 18, color: '#BDBDBD', marginTop: 4, alignSelf: 'flex-end' },
+  rowPayBtn: {
+    marginTop: 6, paddingHorizontal: 12, paddingVertical: 5,
+    backgroundColor: '#1A7A35', borderRadius: 20,
+  },
+  rowPayBtnText: { fontSize: 12, color: '#fff', fontWeight: '700' },
 
   emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0' },
   emptyText: { fontSize: 14, color: '#9E9E9E', marginBottom: 10 },

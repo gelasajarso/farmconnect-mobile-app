@@ -4,14 +4,14 @@ import {
   StyleSheet, SafeAreaView, ActivityIndicator, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 import { useDeliveries } from '../hooks/useDeliveries';
 import { DELIVERY_STATUS_LABELS } from '../utils/enumLabels';
-import type { DeliveryTabParamList } from '../navigation/types';
+import type { DeliveryStackParamList } from '../navigation/types';
 import type { DeliveryResponse, DeliveryStatus } from '../types';
 
-type DashNavProp = BottomTabNavigationProp<DeliveryTabParamList>;
+type DashNavProp = StackNavigationProp<DeliveryStackParamList, 'DeliveryDashboard'>;
 
 const STATUS_COLORS: Record<DeliveryStatus, string> = {
   ASSIGNED: '#1565C0', PICKED_UP: '#6A1B9A', IN_TRANSIT: '#E65100',
@@ -59,13 +59,14 @@ export default function DeliveryDashboardScreen() {
         {/* Quick Actions */}
         <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <ActionCard emoji="📋" label="Assignments" onPress={() => navigation.navigate('DeliveryStack')} />
-          <ActionCard emoji="🗺️" label="Active Routes" onPress={() => navigation.navigate('DeliveryStack')} />
-          <ActionCard emoji="🛒" label="Marketplace"  onPress={() => navigation.navigate('HomeStack')} />
+          <ActionCard emoji="📋" label="Assignments"  onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
+          <ActionCard emoji="🗺️" label="Active Routes" onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
+          <ActionCard emoji="🛒" label="Marketplace"  onPress={() => navigation.getParent()?.navigate('HomeStack')} />
+          <ActionCard emoji="👤" label="Profile"      onPress={() => navigation.navigate('Profile')} />
         </View>
 
         {/* Recent Assignments */}
-        <SectionHeader title="Recent Assignments" onSeeAll={() => navigation.navigate('DeliveryStack')} />
+        <SectionHeader title="Recent Assignments" onSeeAll={() => navigation.navigate('DeliveryAssignmentsList')} />
         {loading ? (
           <ActivityIndicator color="#1A7A35" style={styles.loader} />
         ) : error ? (
