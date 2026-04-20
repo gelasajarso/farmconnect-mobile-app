@@ -1,23 +1,31 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { Platform } from 'react-native';
-import { createNavigationContainerRef } from '@react-navigation/native';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { Platform } from "react-native";
+import { createNavigationContainerRef } from "@react-navigation/native";
 import {
   getAccessToken,
   getRefreshToken,
   storeTokens,
   clearTokens,
-} from '../utils/tokenStorage';
-import type { RefreshTokenResponse } from '../types';
+} from "../utils/tokenStorage";
+import type { RefreshTokenResponse } from "../types";
 
 // Navigation ref — attached to NavigationContainer in App.tsx
 export const navigationRef = createNavigationContainerRef<any>();
 
 function getDefaultBaseUrl() {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000/api/v1';
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8000/api/v1";
   }
 
-  return 'http://localhost:8000/api/v1';
+  if (Platform.OS === "web") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://localhost:8000/api/v1";
+    }
+    return `http://${host}:8000/api/v1`;
+  }
+
+  return "http://localhost:8000/api/v1";
 }
 
 function normalizeBaseUrl(url?: string) {
@@ -28,7 +36,7 @@ function normalizeBaseUrl(url?: string) {
 
   const fallbackUrl = getDefaultBaseUrl();
   console.warn(
-    `[API] EXPO_PUBLIC_API_URL is not set. Falling back to ${fallbackUrl}`
+    `[API] EXPO_PUBLIC_API_URL is not set. Falling back to ${fallbackUrl}`,
   );
   return fallbackUrl;
 }
@@ -41,7 +49,7 @@ console.info(`[API] Using base URL: ${API_BASE_URL}`);
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 15000,
 });
@@ -55,7 +63,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ─── Response Interceptor: 401 → refresh → retry once ────────────────────────
@@ -75,13 +83,13 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await getRefreshToken();
-        if (!refreshToken) throw new Error('No refresh token available');
+        if (!refreshToken) throw new Error("No refresh token available");
 
         // Call refresh endpoint directly (not through intercepted api instance)
         const { data } = await axios.post<RefreshTokenResponse>(
           `${API_BASE_URL}/auth/refresh`,
           { refresh_token: refreshToken },
-          { headers: { 'Content-Type': 'application/json' } }
+          { headers: { "Content-Type": "application/json" } },
         );
 
         // Store rotated tokens
@@ -94,14 +102,14 @@ api.interceptors.response.use(
         // Refresh failed — clear all tokens and redirect to login
         await clearTokens();
         if (navigationRef.isReady()) {
-          navigationRef.navigate('Login' as never);
+          navigationRef.navigate("Login" as never);
         }
         return Promise.reject(error);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
