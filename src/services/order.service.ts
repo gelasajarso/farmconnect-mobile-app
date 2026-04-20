@@ -1,17 +1,30 @@
-import api from './api';
-import { USE_MOCK } from '../mock';
-import { mockGetOrders, mockCreateOrder, mockCancelOrder } from '../mock/mockServices';
-import type { OrderDTO, OrderCreate, OrderEscrowPair } from '../types';
+import api from "./api";
+import { USE_MOCK } from "../mock";
+import {
+  mockGetOrders,
+  mockGetOrderById,
+  mockCreateOrder,
+  mockCancelOrder,
+} from "../mock/mockServices";
+import type { OrderDTO, OrderCreate, OrderEscrowPair } from "../types";
 
 export async function getOrders(): Promise<OrderDTO[]> {
   if (USE_MOCK) return mockGetOrders();
-  const { data } = await api.get<OrderDTO[]>('/orders');
+  const { data } = await api.get<OrderDTO[]>("/orders");
   return data;
 }
 
-export async function createOrder(orderData: OrderCreate): Promise<OrderEscrowPair> {
+export async function getOrderById(orderId: string): Promise<OrderDTO> {
+  if (USE_MOCK) return mockGetOrderById(orderId);
+  const { data } = await api.get<OrderDTO>(`/orders/${orderId}`);
+  return data;
+}
+
+export async function createOrder(
+  orderData: OrderCreate,
+): Promise<OrderEscrowPair> {
   if (USE_MOCK) return mockCreateOrder(orderData);
-  const { data } = await api.post<OrderEscrowPair>('/orders', orderData);
+  const { data } = await api.post<OrderEscrowPair>("/orders", orderData);
   return data;
 }
 

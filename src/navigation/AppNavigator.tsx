@@ -22,6 +22,8 @@ import FarmerDashboardScreen from "../screens/FarmerDashboardScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import FarmerProductsScreen from "../screens/FarmerProductsScreen";
 import AddProductScreen from "../screens/AddProductScreen";
+import EditProductScreen from "../screens/EditProductScreen";
+import OrderDetailScreen from "../screens/OrderDetailScreen";
 import MerchantOrdersScreen from "../screens/MerchantOrdersScreen";
 import MerchantDashboardScreen from "../screens/MerchantDashboardScreen";
 import DeliveryAssignmentsScreen from "../screens/DeliveryAssignmentsScreen";
@@ -86,6 +88,11 @@ function FarmerStackNavigator() {
         options={{ title: "Add Product" }}
       />
       <FarmerStack.Screen
+        name="EditProduct"
+        component={EditProductScreen}
+        options={{ title: "Edit Product" }}
+      />
+      <FarmerStack.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: "Profile" }}
@@ -108,7 +115,9 @@ function FarmerStackNavigator() {
       <FarmerStack.Screen
         name="ChatDetail"
         component={ChatDetailScreen}
-        options={({ route }) => ({ title: (route.params as any).participantName })}
+        options={({ route }) => ({
+          title: (route.params as any).participantName,
+        })}
       />
     </FarmerStack.Navigator>
   );
@@ -147,14 +156,20 @@ function FarmerNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-            HomeStack:           'storefront-outline',
-            FarmerProductsStack: 'leaf-outline',
-            ChatStack:           'chatbubble-ellipses-outline',
+            HomeStack: "storefront-outline",
+            FarmerProductsStack: "leaf-outline",
+            ChatStack: "chatbubble-ellipses-outline",
           };
-          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={icons[route.name] ?? "ellipse-outline"}
+              size={size}
+              color={color}
+            />
+          );
         },
-        tabBarActiveTintColor:   '#1A7A35',
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarActiveTintColor: "#1A7A35",
+        tabBarInactiveTintColor: "#9E9E9E",
       })}
     >
       <FarmerTab.Screen
@@ -193,6 +208,11 @@ function MerchantStackNavigator() {
         options={{ title: "My Orders" }}
       />
       <MerchantStack.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+        options={{ title: "Order Detail" }}
+      />
+      <MerchantStack.Screen
         name="TransactionHistory"
         component={TransactionHistoryScreen}
         options={{ title: "Transactions" }}
@@ -210,12 +230,20 @@ function MerchantStackNavigator() {
       <MerchantStack.Screen
         name="PaymentProcessing"
         component={PaymentProcessingScreen}
-        options={{ title: "Processing Payment", headerLeft: () => null, gestureEnabled: false }}
+        options={{
+          title: "Processing Payment",
+          headerLeft: () => null,
+          gestureEnabled: false,
+        }}
       />
       <MerchantStack.Screen
         name="PaymentResult"
         component={PaymentResultScreen}
-        options={{ title: "Payment Result", headerLeft: () => null, gestureEnabled: false }}
+        options={{
+          title: "Payment Result",
+          headerLeft: () => null,
+          gestureEnabled: false,
+        }}
       />
       <MerchantStack.Screen
         name="BankTransfer"
@@ -248,14 +276,20 @@ function MerchantNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-            HomeStack:     'storefront-outline',
-            MerchantStack: 'bag-handle-outline',
-            ChatStack:     'chatbubble-ellipses-outline',
+            HomeStack: "storefront-outline",
+            MerchantStack: "bag-handle-outline",
+            ChatStack: "chatbubble-ellipses-outline",
           };
-          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={icons[route.name] ?? "ellipse-outline"}
+              size={size}
+              color={color}
+            />
+          );
         },
-        tabBarActiveTintColor:   '#1A7A35',
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarActiveTintColor: "#1A7A35",
+        tabBarInactiveTintColor: "#9E9E9E",
       })}
     >
       <MerchantTab.Screen
@@ -319,14 +353,20 @@ function DeliveryNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-            HomeStack:     'storefront-outline',
-            DeliveryStack: 'bicycle-outline',
-            ChatStack:     'chatbubble-ellipses-outline',
+            HomeStack: "storefront-outline",
+            DeliveryStack: "bicycle-outline",
+            ChatStack: "chatbubble-ellipses-outline",
           };
-          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={icons[route.name] ?? "ellipse-outline"}
+              size={size}
+              color={color}
+            />
+          );
         },
-        tabBarActiveTintColor:   '#1A7A35',
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarActiveTintColor: "#1A7A35",
+        tabBarInactiveTintColor: "#9E9E9E",
       })}
     >
       <DeliveryTab.Screen
@@ -405,14 +445,20 @@ function AdminNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-            HomeStack:  'storefront-outline',
-            AdminStack: 'shield-checkmark-outline',
-            ChatStack:  'chatbubble-ellipses-outline',
+            HomeStack: "storefront-outline",
+            AdminStack: "shield-checkmark-outline",
+            ChatStack: "chatbubble-ellipses-outline",
           };
-          return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={icons[route.name] ?? "ellipse-outline"}
+              size={size}
+              color={color}
+            />
+          );
         },
-        tabBarActiveTintColor:   '#1A7A35',
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarActiveTintColor: "#1A7A35",
+        tabBarInactiveTintColor: "#9E9E9E",
       })}
     >
       <AdminTab.Screen

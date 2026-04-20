@@ -20,6 +20,7 @@ export type FarmerStackParamList = {
   FarmerDashboard: undefined;
   FarmerProductsList: undefined;
   AddProduct: undefined;
+  EditProduct: { productId: string };
   ChatList: undefined;
   ChatDetail: {
     conversationId: string;
@@ -40,6 +41,7 @@ export type FarmerTabParamList = {
 export type MerchantStackParamList = {
   MerchantDashboard: undefined;
   MerchantOrdersList: undefined;
+  OrderDetail: { orderId: string };
   TransactionHistory: undefined;
   TransactionDetail: { orderId: string };
   // ── Payment flow ──

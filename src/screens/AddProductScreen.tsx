@@ -10,6 +10,8 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
@@ -19,6 +21,8 @@ import { extractApiError } from "../utils/errorHandling";
 import { isValidCurrencyCode, isValidIsoDate } from "../utils/validation";
 import type { FarmerStackParamList } from "../navigation/types";
 import type { Category, Unit, QualityGrade } from "../types";
+import * as ImagePicker from "expo-image-picker";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type NavProp = StackNavigationProp<FarmerStackParamList, "AddProduct">;
 
@@ -90,6 +94,11 @@ export default function AddProductScreen() {
   const [harvestDate, setHarvestDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [images, setImages] = useState<string[]>([]);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -128,6 +137,59 @@ export default function AddProductScreen() {
       e.currency = "Currency must be a 3-letter code.";
     setErrors(e);
     return Object.keys(e).length === 0;
+  }
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Camera roll permissions are required to select images.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // In a real app, you'd upload the image to a server and get back a URL
+      // For now, we'll just store the local URI
+      setImages((prev) => [...prev, result.assets[0].uri]);
+    }
+  }
+
+  async function pickLocation() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Location permissions are required to set product location.",
+      );
+      return;
+    }
+
+    // For simplicity, we'll use a mock location picker
+    // In a real app, you'd use expo-location to get current location
+    Alert.alert(
+      "Location Picker",
+      "In a real app, this would open a map to select location. For demo, setting to a sample location.",
+      [
+        {
+          text: "Use Sample Location",
+          onPress: () => setLocation({ latitude: -1.2864, longitude: 36.8172 }), // Nairobi coordinates
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  }
+
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleSubmit() {
@@ -358,6 +420,64 @@ export default function AddProductScreen() {
           />
         </View>
 
+        {/* Images */}
+        <Field label="Product Images">
+          <View style={styles.imageSection}>
+            <TouchableOpacity
+              style={styles.addImageBtn}
+              onPress={pickImage}
+              disabled={loading}
+            >
+              <MaterialIcons
+                name="add-photo-alternate"
+                size={24}
+                color={G.primary}
+              />
+              <Text style={styles.addImageText}>Add Image</Text>
+            </TouchableOpacity>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.imageList}
+            >
+              {images.map((uri, index) => (
+                <View key={index} style={styles.imageContainer}>
+                  <Image source={{ uri }} style={styles.imagePreview} />
+                  <TouchableOpacity
+                    style={styles.removeImageBtn}
+                    onPress={() => removeImage(index)}
+                    disabled={loading}
+                  >
+                    <MaterialIcons name="close" size={16} color={G.white} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </Field>
+
+        {/* Location */}
+        <Field label="Product Location">
+          <TouchableOpacity
+            style={[styles.locationBtn, location && styles.locationBtnSet]}
+            onPress={pickLocation}
+            disabled={loading}
+          >
+            <MaterialIcons
+              name={location ? "location-on" : "location-off"}
+              size={20}
+              color={location ? G.primary : G.sub}
+            />
+            <Text
+              style={[styles.locationText, location && styles.locationTextSet]}
+            >
+              {location
+                ? `Location set (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
+                : "Set product location (optional)"}
+            </Text>
+          </TouchableOpacity>
+        </Field>
+
         <TouchableOpacity
           style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
           onPress={handleSubmit}
@@ -487,6 +607,49 @@ const styles = StyleSheet.create({
   },
   switchLabel: { fontSize: 15, fontWeight: "700", color: G.text },
   switchSub: { fontSize: 12, color: G.sub, marginTop: 2 },
+
+  imageSection: { marginTop: 8 },
+  addImageBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: G.border,
+    borderRadius: 8,
+    borderStyle: "dashed",
+    backgroundColor: G.surface,
+    marginBottom: 12,
+  },
+  addImageText: { fontSize: 14, color: G.primary, fontWeight: "600" },
+  imageList: { flexDirection: "row" },
+  imageContainer: { position: "relative", marginRight: 12 },
+  imagePreview: { width: 80, height: 80, borderRadius: 8 },
+  removeImageBtn: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: G.error,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  locationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: G.border,
+    borderRadius: 8,
+    backgroundColor: G.surface,
+  },
+  locationBtnSet: { borderColor: G.primary, backgroundColor: "#E8F5E8" },
+  locationText: { fontSize: 14, color: G.sub, flex: 1 },
+  locationTextSet: { color: G.primary, fontWeight: "600" },
 
   submitBtn: {
     backgroundColor: G.primary,
