@@ -188,7 +188,7 @@ export default function AddProductScreen() {
         {/* Name */}
         <Field label="Product Name *" error={errors.name}>
           <TextInput
-            style={[styles.input, errors.name && styles.inputErr]}
+            style={[styles.input, errors.name ? styles.inputErr : null]}
             value={name}
             onChangeText={setName}
             placeholder="e.g. Organic Tomatoes"
@@ -258,7 +258,7 @@ export default function AddProductScreen() {
               style={[
                 styles.input,
                 styles.flex,
-                errors.basePrice && styles.inputErr,
+                errors.basePrice ? styles.inputErr : null,
               ]}
               value={basePrice}
               onChangeText={setBasePrice}
@@ -283,7 +283,7 @@ export default function AddProductScreen() {
         {/* Quantity */}
         <Field label="Total Quantity *" error={errors.totalQty}>
           <TextInput
-            style={[styles.input, errors.totalQty && styles.inputErr]}
+            style={[styles.input, errors.totalQty ? styles.inputErr : null]}
             value={totalQty}
             onChangeText={setTotalQty}
             placeholder="0"
@@ -320,7 +320,7 @@ export default function AddProductScreen() {
           error={errors.harvestDate}
         >
           <TextInput
-            style={[styles.input, errors.harvestDate && styles.inputErr]}
+            style={[styles.input, errors.harvestDate ? styles.inputErr : null]}
             value={harvestDate}
             onChangeText={setHarvestDate}
             placeholder="2026-04-01"
@@ -332,7 +332,7 @@ export default function AddProductScreen() {
         {/* Expiry Date */}
         <Field label="Expiry Date" hint="YYYY-MM-DD" error={errors.expiryDate}>
           <TextInput
-            style={[styles.input, errors.expiryDate && styles.inputErr]}
+            style={[styles.input, errors.expiryDate ? styles.inputErr : null]}
             value={expiryDate}
             onChangeText={setExpiryDate}
             placeholder="2026-12-31"

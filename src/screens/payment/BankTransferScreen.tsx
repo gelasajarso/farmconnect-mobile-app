@@ -12,7 +12,8 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import type { StackNavigationProp, RouteProp } from "@react-navigation/stack";
+import type { StackNavigationProp } from "@react-navigation/stack";
+import type { RouteProp } from "@react-navigation/native";
 import type { MerchantStackParamList } from "../../navigation/types";
 import {
   getBankAccounts,

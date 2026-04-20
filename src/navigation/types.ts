@@ -1,4 +1,8 @@
-import type { PaymentProvider, PaymentStatus, PaymentInitParams } from './payment';
+import type {
+  PaymentProvider,
+  PaymentStatus,
+  PaymentInitParams,
+} from "../types/payment";
 
 export type AuthStackParamList = {
   Landing: undefined;
@@ -17,7 +21,11 @@ export type FarmerStackParamList = {
   FarmerProductsList: undefined;
   AddProduct: undefined;
   ChatList: undefined;
-  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
+  ChatDetail: {
+    conversationId: string;
+    participantName: string;
+    participantRole: string;
+  };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -36,7 +44,10 @@ export type MerchantStackParamList = {
   TransactionDetail: { orderId: string };
   // ── Payment flow ──
   SelectPayment: { paymentParams: PaymentInitParams };
-  PaymentProcessing: { provider: PaymentProvider; paymentParams: PaymentInitParams };
+  PaymentProcessing: {
+    provider: PaymentProvider;
+    paymentParams: PaymentInitParams;
+  };
   PaymentResult: {
     status: PaymentStatus;
     provider: PaymentProvider;
@@ -48,7 +59,11 @@ export type MerchantStackParamList = {
   BankTransfer: { paymentParams: PaymentInitParams };
   // ── Chat ──
   ChatList: undefined;
-  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
+  ChatDetail: {
+    conversationId: string;
+    participantName: string;
+    participantRole: string;
+  };
   // ─────────────────
   Profile: undefined;
   Settings: undefined;
@@ -65,7 +80,11 @@ export type DeliveryStackParamList = {
   DeliveryDashboard: undefined;
   DeliveryAssignmentsList: undefined;
   ChatList: undefined;
-  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
+  ChatDetail: {
+    conversationId: string;
+    participantName: string;
+    participantRole: string;
+  };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -84,7 +103,11 @@ export type AdminStackParamList = {
   AdminOrders: undefined;
   AdminDeliveries: undefined;
   ChatList: undefined;
-  ChatDetail: { conversationId: string; participantName: string; participantRole: string };
+  ChatDetail: {
+    conversationId: string;
+    participantName: string;
+    participantRole: string;
+  };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;

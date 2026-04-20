@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import type { AuthStackParamList } from "../navigation/types";
 import { isValidEmail } from "../utils/validation";
+import { sendOtp, verifyOtp, resetPassword } from "../services/auth.service";
 
 type NavProp = StackNavigationProp<AuthStackParamList, "ForgotPassword">;
 
@@ -29,15 +30,21 @@ const G = {
   white: "#fff",
 };
 
+type Step = "email" | "otp" | "reset" | "success";
+
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation<NavProp>();
+  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [focused, setFocused] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [focused, setFocused] = useState<string>("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [resetToken, setResetToken] = useState("");
 
-  async function handleReset() {
+  async function handleSendOtp() {
     setError("");
     if (!email.trim()) {
       setError("Email is required.");
@@ -48,10 +55,252 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    // Mock: simulate network delay
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    setSent(true);
+    try {
+      await sendOtp(email.trim());
+      setStep("otp");
+    } catch (err: any) {
+      setError("Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    setError("");
+    if (!otp.trim()) {
+      setError("OTP is required.");
+      return;
+    }
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+      setError("Enter a valid 6-digit OTP.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await verifyOtp(email.trim(), otp.trim());
+      setResetToken(res.token);
+      setStep("reset");
+    } catch (err: any) {
+      setError("Invalid OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    setError("");
+    if (!newPassword.trim()) {
+      setError("New password is required.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await resetPassword(resetToken, newPassword);
+      setStep("success");
+    } catch (err: any) {
+      setError("Failed to reset password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderEmailStep() {
+    return (
+      <>
+        {/* Icon */}
+        <View style={styles.iconWrap}>
+          <Text style={styles.iconEmoji}>🔑</Text>
+        </View>
+
+        <Text style={styles.title}>Forgot Password?</Text>
+        <Text style={styles.subtitle}>
+          Enter your registered email and we'll send you a one-time password
+          (OTP).
+        </Text>
+
+        <Text style={styles.label}>Email Address</Text>
+        <View
+          style={[
+            styles.inputRow,
+            focused === "email" ? styles.inputFocused : null,
+            error ? styles.inputError : null,
+          ]}
+        >
+          <Text style={styles.inputIcon}>✉</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor={G.sub}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            editable={!loading}
+            onFocus={() => setFocused("email")}
+            onBlur={() => setFocused("")}
+          />
+        </View>
+        {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.btn, loading && styles.btnDisabled]}
+          onPress={handleSendOtp}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Sending…" : "Send OTP"}
+          </Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  function renderOtpStep() {
+    return (
+      <>
+        <Text style={styles.title}>Enter OTP</Text>
+        <Text style={styles.subtitle}>
+          We've sent a 6-digit code to{"\n"}
+          <Text style={styles.emailHighlight}>{email}</Text>
+        </Text>
+
+        <Text style={styles.label}>OTP Code</Text>
+        <View
+          style={[
+            styles.inputRow,
+            focused === "otp" ? styles.inputFocused : null,
+            error ? styles.inputError : null,
+          ]}
+        >
+          <Text style={styles.inputIcon}>🔢</Text>
+          <TextInput
+            style={styles.input}
+            value={otp}
+            onChangeText={setOtp}
+            placeholder="123456"
+            placeholderTextColor={G.sub}
+            keyboardType="numeric"
+            maxLength={6}
+            editable={!loading}
+            onFocus={() => setFocused("otp")}
+            onBlur={() => setFocused("")}
+          />
+        </View>
+        {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.btn, loading && styles.btnDisabled]}
+          onPress={handleVerifyOtp}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Verifying…" : "Verify OTP"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.backLink}
+          onPress={() => setStep("email")}
+        >
+          <Text style={styles.backLinkText}>← Change Email</Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  function renderResetStep() {
+    return (
+      <>
+        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.subtitle}>Enter your new password.</Text>
+
+        <Text style={styles.label}>New Password</Text>
+        <View
+          style={[
+            styles.inputRow,
+            focused === "newPassword" ? styles.inputFocused : null,
+            error ? styles.inputError : null,
+          ]}
+        >
+          <Text style={styles.inputIcon}>🔒</Text>
+          <TextInput
+            style={styles.input}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="Enter new password"
+            placeholderTextColor={G.sub}
+            secureTextEntry
+            editable={!loading}
+            onFocus={() => setFocused("newPassword")}
+            onBlur={() => setFocused("")}
+          />
+        </View>
+
+        <Text style={styles.label}>Confirm Password</Text>
+        <View
+          style={[
+            styles.inputRow,
+            focused === "confirmPassword" ? styles.inputFocused : null,
+            error ? styles.inputError : null,
+          ]}
+        >
+          <Text style={styles.inputIcon}>🔒</Text>
+          <TextInput
+            style={styles.input}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="Confirm new password"
+            placeholderTextColor={G.sub}
+            secureTextEntry
+            editable={!loading}
+            onFocus={() => setFocused("confirmPassword")}
+            onBlur={() => setFocused("")}
+          />
+        </View>
+        {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.btn, loading && styles.btnDisabled]}
+          onPress={handleResetPassword}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Resetting…" : "Reset Password"}
+          </Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  function renderSuccessStep() {
+    return (
+      <View style={styles.successCard}>
+        <Text style={styles.successEmoji}>✅</Text>
+        <Text style={styles.successTitle}>Password Reset Successful</Text>
+        <Text style={styles.successBody}>
+          Your password has been reset. You can now sign in with your new
+          password.
+        </Text>
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => navigation.navigate("Login")}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.btnText}>Back to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
@@ -80,73 +329,12 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={styles.content}>
-          {!sent ? (
-            <>
-              {/* Icon */}
-              <View style={styles.iconWrap}>
-                <Text style={styles.iconEmoji}>🔑</Text>
-              </View>
+          {step === "email" && renderEmailStep()}
+          {step === "otp" && renderOtpStep()}
+          {step === "reset" && renderResetStep()}
+          {step === "success" && renderSuccessStep()}
 
-              <Text style={styles.title}>Forgot Password?</Text>
-              <Text style={styles.subtitle}>
-                Enter your registered email and we'll send you a reset link.
-              </Text>
-
-              <Text style={styles.label}>Email Address</Text>
-              <View
-                style={[
-                  styles.inputRow,
-                  focused ? styles.inputFocused : null,
-                  error ? styles.inputError : null,
-                ]}
-              >
-                <Text style={styles.inputIcon}>✉</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={G.sub}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  editable={!loading}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                />
-              </View>
-              {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-
-              <TouchableOpacity
-                style={[styles.btn, loading && styles.btnDisabled]}
-                onPress={handleReset}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.btnText}>
-                  {loading ? "Sending…" : "Send Reset Link"}
-                </Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            /* Success state */
-            <View style={styles.successCard}>
-              <Text style={styles.successEmoji}>✅</Text>
-              <Text style={styles.successTitle}>Check your inbox</Text>
-              <Text style={styles.successBody}>
-                A password reset link has been sent to{"\n"}
-                <Text style={styles.successEmail}>{email}</Text>
-              </Text>
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() => navigation.navigate("Login")}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.btnText}>Back to Sign In</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {!sent && (
+          {step !== "success" && step !== "otp" && (
             <TouchableOpacity
               style={styles.backLink}
               onPress={() => navigation.navigate("Login")}
@@ -298,4 +486,5 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   successEmail: { color: G.primary, fontWeight: "700" },
+  emailHighlight: { color: G.primary, fontWeight: "700" },
 });
