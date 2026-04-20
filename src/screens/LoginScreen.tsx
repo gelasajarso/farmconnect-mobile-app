@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import { useAuth } from "../context/AuthContext";
 import { extractApiError } from "../utils/errorHandling";
+import { isValidEmail } from "../utils/validation";
 import type { AuthStackParamList } from "../navigation/types";
 
 type LoginNavProp = StackNavigationProp<AuthStackParamList, "Login">;
@@ -57,6 +58,9 @@ export default function LoginScreen() {
     setApiError("");
     if (!email.trim()) {
       setEmailError("Email is required.");
+      valid = false;
+    } else if (!isValidEmail(email)) {
+      setEmailError("Enter a valid email address.");
       valid = false;
     }
     if (!password.trim()) {
