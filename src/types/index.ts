@@ -82,6 +82,7 @@ export interface AuthUser {
   name: string;
   role: UserRole;
   system_user_id: string | null; // lazily resolved from domain responses (e.g. FAR-00001)
+  onboarding_status: string | null; // e.g. 'PENDING_REVIEW', 'ACTIVE'
 }
 
 export interface AuthContextValue {
@@ -91,6 +92,8 @@ export interface AuthContextValue {
   logout: () => Promise<void>;
   resolveSystemUserId: (id: string) => Promise<void>;
   updateProfile: (updates: { name: string; email: string }) => Promise<void>;
+  signup: (payload: import('../services/auth.service').SignupPayload) => Promise<import('../services/auth.service').SignupResponse>;
+  verifyOTP: (payload: import('../services/auth.service').VerifyOtpPayload) => Promise<void>;
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────

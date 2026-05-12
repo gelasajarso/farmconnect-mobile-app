@@ -96,6 +96,7 @@ export default function FarmerDashboardScreen() {
         <View style={styles.actionsRow}>
           <ActionCard label="My Products" emoji="🌾" onPress={() => navigation.navigate('FarmerProductsList')} />
           <ActionCard label="Add Product" emoji="➕"  onPress={() => navigation.navigate('AddProduct')} />
+          <ActionCard label="My Orders"   emoji="📋"  onPress={() => navigation.navigate('FarmerOrders')} />
           <ActionCard label="Marketplace" emoji="🛒"  onPress={() => navigation.getParent()?.navigate('HomeStack')} />
           <ActionCard label="Profile"     emoji="👤"  onPress={() => navigation.navigate('Profile')} />
         </View>
@@ -113,7 +114,7 @@ export default function FarmerDashboardScreen() {
         {/* Recent Orders */}
         <SectionHeader
           title="Recent Orders"
-          onSeeAll={ordersError ? undefined : undefined}
+          onSeeAll={() => navigation.navigate('FarmerOrders')}
         />
         {ordersLoading ? (
           <ActivityIndicator color="#1A7A35" style={styles.loader} />

@@ -19,6 +19,9 @@ import {
   TOKEN_KEYS,
 } from "../utils/tokenStorage";
 
+// Re-export service types so screens can import from one place
+export type { SignupPayload, SignupResponse, VerifyOtpPayload } from "../services/auth.service";
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -75,6 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       name: response.user.name,
       role: response.user.role as UserRole,
       system_user_id: mockSystemUserId,
+      onboarding_status: (response as any).onboarding_status ?? null,
     };
     await storeUserProfile(profile);
     if (mockSystemUserId) {
@@ -114,14 +118,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
         name: updates.name,
         email: updates.email,
         system_user_id: null,
+        onboarding_status: null,
       });
     }
     // Real API: await api.patch('/users/me', updates)
   }, []);
 
+  const signup = useCallback(async (payload: authService.SignupPayload): Promise<authService.SignupResponse> => {
+    // Calls the signup service and returns the response.
+    // Does NOT log the user in — authentication happens after OTP verification.
+    return authService.signup(payload);
+  }, []);
+
+  const verifyOTP = useCallback(async (payload: authService.VerifyOtpPayload): Promise<void> => {
+    const response = await authService.verifyOtp(payload);
+
+    // Store tokens (same as login)
+    await storeTokens(response.access_token, response.refresh_token);
+
+    // Build and store user profile (same as login)
+    const mockSystemUserId = (response as any)._mock_system_user_id ?? null;
+    const profile: AuthUser = {
+      keycloak_id: response.user.id,
+      email: response.user.email,
+      name: response.user.name,
+      role: response.user.role as UserRole,
+      system_user_id: mockSystemUserId,
+      onboarding_status: (response as any).onboarding_status ?? null,
+    };
+    await storeUserProfile(profile);
+    if (mockSystemUserId) {
+      await storeSystemUserId(mockSystemUserId);
+    }
+
+    setUser(profile);
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, login, logout, resolveSystemUserId, updateProfile }}
+      value={{ user, isLoading, login, logout, resolveSystemUserId, updateProfile, signup, verifyOTP }}
     >
       {children}
     </AuthContext.Provider>
@@ -149,6 +184,7 @@ async function storeUserProfile(profile: AuthUser): Promise<void> {
     email: profile.email,
     name: profile.name,
     role: profile.role,
+    onboarding_status: profile.onboarding_status ?? null,
   });
   await SecureStore.setItemAsync(USER_PROFILE_KEY, serialized);
 }
@@ -160,7 +196,14 @@ async function getStoredUserProfile(): Promise<Omit<
   const raw = await SecureStore.getItemAsync(USER_PROFILE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as Omit<AuthUser, "system_user_id">;
+    const parsed = JSON.parse(raw);
+    return {
+      keycloak_id: parsed.keycloak_id,
+      email: parsed.email,
+      name: parsed.name,
+      role: parsed.role,
+      onboarding_status: parsed.onboarding_status ?? null,
+    } as Omit<AuthUser, "system_user_id">;
   } catch {
     return null;
   }

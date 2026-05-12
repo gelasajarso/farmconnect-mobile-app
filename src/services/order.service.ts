@@ -37,3 +37,32 @@ export async function cancelOrder(
   const { data } = await api.post<OrderDTO>(`/orders/${orderId}/cancel`);
   return data;
 }
+
+// ─── Farmer Order Actions ─────────────────────────────────────────────────────
+
+/** Farmer — fetch all orders for the authenticated farmer */
+export async function getFarmerOrders(): Promise<OrderDTO[]> {
+  if (USE_MOCK) return mockGetOrders();
+  const { data } = await api.get<OrderDTO[]>('/orders/');
+  return data;
+}
+
+/** Farmer — confirm a FUNDED order (FUNDED → CONFIRMED) */
+export async function confirmOrder(orderId: string): Promise<OrderDTO> {
+  if (USE_MOCK) {
+    const order = await mockGetOrderById(orderId);
+    return { ...order, status: 'CONFIRMED' };
+  }
+  const { data } = await api.post<OrderDTO>(`/orders/${orderId}/confirm`);
+  return data;
+}
+
+/** Farmer — cancel a CREATED or PENDING_PAYMENT order */
+export async function cancelFarmerOrder(orderId: string): Promise<OrderDTO> {
+  if (USE_MOCK) {
+    const order = await mockGetOrderById(orderId);
+    return { ...order, status: 'CANCELLED' };
+  }
+  const { data } = await api.post<OrderDTO>(`/orders/${orderId}/cancel`);
+  return data;
+}

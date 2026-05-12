@@ -9,15 +9,24 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  OtpVerification: {
+    userId: string;
+    method: 'email' | 'phone';
+    email?: string;
+  };
 };
 
 export type HomeStackParamList = {
   ProductList: undefined;
   ProductDetail: { productId: string };
+  Analytics: undefined;
+  Sustainability: undefined;
+  About: undefined;
 };
 
 export type FarmerStackParamList = {
   FarmerDashboard: undefined;
+  FarmerOrders: undefined;
   FarmerProductsList: undefined;
   AddProduct: undefined;
   EditProduct: { productId: string };
@@ -30,12 +39,14 @@ export type FarmerStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
+  AIAgronomist: undefined;
 };
 
 export type FarmerTabParamList = {
   HomeStack: undefined;
   FarmerProductsStack: undefined;
   ChatStack: undefined;
+  AIAgronomist: undefined;
 };
 
 export type MerchantStackParamList = {
@@ -70,17 +81,20 @@ export type MerchantStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
+  ScanQR: undefined;
 };
 
 export type MerchantTabParamList = {
   HomeStack: undefined;
   MerchantStack: undefined;
   ChatStack: undefined;
+  ScanQR: undefined;
 };
 
 export type DeliveryStackParamList = {
   DeliveryDashboard: undefined;
   DeliveryAssignmentsList: undefined;
+  AvailableOrders: undefined;
   ChatList: undefined;
   ChatDetail: {
     conversationId: string;
@@ -90,12 +104,14 @@ export type DeliveryStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
+  DeliveryTracking: undefined;
 };
 
 export type DeliveryTabParamList = {
   HomeStack: undefined;
   DeliveryStack: undefined;
   ChatStack: undefined;
+  DeliveryTracking: undefined;
 };
 
 export type AdminStackParamList = {
@@ -104,6 +120,9 @@ export type AdminStackParamList = {
   AdminProducts: undefined;
   AdminOrders: undefined;
   AdminDeliveries: undefined;
+  AdminApprovalQueue: undefined;
+  AdminDeliveryAssign: undefined;
+  AgentOnboarding: undefined;
   ChatList: undefined;
   ChatDetail: {
     conversationId: string;
@@ -119,4 +138,20 @@ export type AdminTabParamList = {
   HomeStack: undefined;
   AdminStack: undefined;
   ChatStack: undefined;
+};
+
+export type AgentStackParamList = {
+  AgentDashboard: undefined;
+  AgentRegion: undefined;
+  AgentFarmers: undefined;
+  AgentOnboarding: undefined;
+  ChatList: undefined;
+  ChatDetail: {
+    conversationId: string;
+    participantName: string;
+    participantRole: string;
+  };
+  Profile: undefined;
+  Settings: undefined;
+  Notifications: undefined;
 };

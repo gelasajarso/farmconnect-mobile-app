@@ -14,11 +14,13 @@ import type {
   AdminStackParamList,
   HomeStackParamList,
   FarmerStackParamList,
+  AgentStackParamList,
 } from "./types";
 
 // Screens
 import HomeScreen from "../screens/HomeScreen";
 import FarmerDashboardScreen from "../screens/FarmerDashboardScreen";
+import FarmerOrdersScreen from "../screens/FarmerOrdersScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import FarmerProductsScreen from "../screens/FarmerProductsScreen";
 import AddProductScreen from "../screens/AddProductScreen";
@@ -34,9 +36,12 @@ import AdminUsersScreen from "../screens/AdminUsersScreen";
 import AdminProductsScreen from "../screens/AdminProductsScreen";
 import AdminOrdersScreen from "../screens/AdminOrdersScreen";
 import AdminDeliveriesScreen from "../screens/AdminDeliveriesScreen";
+import AdminApprovalQueueScreen from "../screens/AdminApprovalQueueScreen";
+import AdminDeliveryAssignScreen from "../screens/AdminDeliveryAssignScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
+import AIAgronomistScreen from "../screens/AIAgronomistScreen";
 import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import TransactionDetailScreen from "../screens/TransactionDetailScreen";
 import SelectPaymentScreen from "../screens/payment/SelectPaymentScreen";
@@ -45,6 +50,17 @@ import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
 import BankTransferScreen from "../screens/payment/BankTransferScreen";
 import ChatListScreen from "../screens/chat/ChatListScreen";
 import ChatDetailScreen from "../screens/chat/ChatDetailScreen";
+import AvailableOrdersScreen from "../screens/AvailableOrdersScreen";
+import ScanQRScreen from "../screens/ScanQRScreen";
+import DeliveryTrackingScreen from "../screens/DeliveryTrackingScreen";
+import AgentOnboardingScreen from "../screens/AgentOnboardingScreen";
+import AnalyticsScreen from "../screens/AnalyticsScreen";
+import SustainabilityScreen from "../screens/SustainabilityScreen";
+import AboutScreen from "../screens/AboutScreen";
+import AgentDashboardScreen from "../screens/AgentDashboardScreen";
+import AgentRegionScreen from "../screens/AgentRegionScreen";
+import AgentFarmersScreen from "../screens/AgentFarmersScreen";
+import AdminReportsScreen from "../screens/AdminReportsScreen";
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -62,6 +78,21 @@ function HomeStackNavigator() {
         component={ProductDetailScreen}
         options={{ title: "Product Detail" }}
       />
+      <HomeStack.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{ title: "Analytics" }}
+      />
+      <HomeStack.Screen
+        name="Sustainability"
+        component={SustainabilityScreen}
+        options={{ title: "Sustainability" }}
+      />
+      <HomeStack.Screen
+        name="About"
+        component={AboutScreen}
+        options={{ title: "About" }}
+      />
     </HomeStack.Navigator>
   );
 }
@@ -75,6 +106,11 @@ function FarmerStackNavigator() {
       <FarmerStack.Screen
         name="FarmerDashboard"
         component={FarmerDashboardScreen}
+        options={{ headerShown: false }}
+      />
+      <FarmerStack.Screen
+        name="FarmerOrders"
+        component={FarmerOrdersScreen}
         options={{ headerShown: false }}
       />
       <FarmerStack.Screen
@@ -119,6 +155,11 @@ function FarmerStackNavigator() {
           title: (route.params as any).participantName,
         })}
       />
+      <FarmerStack.Screen
+        name="AIAgronomist"
+        component={AIAgronomistScreen}
+        options={{ title: "AI Agronomist" }}
+      />
     </FarmerStack.Navigator>
   );
 }
@@ -159,6 +200,7 @@ function FarmerNavigator() {
             HomeStack: "storefront-outline",
             FarmerProductsStack: "leaf-outline",
             ChatStack: "chatbubble-ellipses-outline",
+            AIAgronomist: "chatbox-outline",
           };
           return (
             <Ionicons
@@ -186,6 +228,11 @@ function FarmerNavigator() {
         name="ChatStack"
         component={ChatStackNavigator}
         options={{ title: "Messages", headerShown: false }}
+      />
+      <FarmerTab.Screen
+        name="AIAgronomist"
+        component={AIAgronomistScreen}
+        options={{ title: "AI Agronomist", headerShown: false }}
       />
     </FarmerTab.Navigator>
   );
@@ -265,6 +312,11 @@ function MerchantStackNavigator() {
         component={NotificationsScreen}
         options={{ title: "Notifications" }}
       />
+      <MerchantStack.Screen
+        name="ScanQR"
+        component={ScanQRScreen}
+        options={{ title: "Scan QR" }}
+      />
     </MerchantStack.Navigator>
   );
 }
@@ -279,6 +331,7 @@ function MerchantNavigator() {
             HomeStack: "storefront-outline",
             MerchantStack: "bag-handle-outline",
             ChatStack: "chatbubble-ellipses-outline",
+            ScanQR: "qr-code-outline",
           };
           return (
             <Ionicons
@@ -307,6 +360,11 @@ function MerchantNavigator() {
         component={ChatStackNavigator}
         options={{ title: "Messages", headerShown: false }}
       />
+      <MerchantTab.Screen
+        name="ScanQR"
+        component={ScanQRScreen}
+        options={{ title: "Scan QR", headerShown: false }}
+      />
     </MerchantTab.Navigator>
   );
 }
@@ -328,6 +386,11 @@ function DeliveryStackNavigator() {
         options={{ title: "My Assignments" }}
       />
       <DeliveryStack.Screen
+        name="AvailableOrders"
+        component={AvailableOrdersScreen}
+        options={{ headerShown: false }}
+      />
+      <DeliveryStack.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: "Profile" }}
@@ -341,6 +404,11 @@ function DeliveryStackNavigator() {
         name="Notifications"
         component={NotificationsScreen}
         options={{ title: "Notifications" }}
+      />
+      <DeliveryStack.Screen
+        name="DeliveryTracking"
+        component={DeliveryTrackingScreen}
+        options={{ title: "Live Tracking" }}
       />
     </DeliveryStack.Navigator>
   );
@@ -356,6 +424,7 @@ function DeliveryNavigator() {
             HomeStack: "storefront-outline",
             DeliveryStack: "bicycle-outline",
             ChatStack: "chatbubble-ellipses-outline",
+            DeliveryTracking: "map-outline",
           };
           return (
             <Ionicons
@@ -383,6 +452,11 @@ function DeliveryNavigator() {
         name="ChatStack"
         component={ChatStackNavigator}
         options={{ title: "Messages", headerShown: false }}
+      />
+      <DeliveryTab.Screen
+        name="DeliveryTracking"
+        component={DeliveryTrackingScreen}
+        options={{ title: "Live Tracking", headerShown: false }}
       />
     </DeliveryTab.Navigator>
   );
@@ -418,6 +492,26 @@ function AdminStackNavigator() {
         name="AdminDeliveries"
         component={AdminDeliveriesScreen}
         options={{ title: "Deliveries" }}
+      />
+      <AdminStack.Screen
+        name="AdminApprovalQueue"
+        component={AdminApprovalQueueScreen}
+        options={{ headerShown: false }}
+      />
+      <AdminStack.Screen
+        name="AdminDeliveryAssign"
+        component={AdminDeliveryAssignScreen}
+        options={{ title: "Delivery Assignment" }}
+      />
+      <AdminStack.Screen
+        name="AgentOnboarding"
+        component={AgentOnboardingScreen}
+        options={{ title: "Agent Onboarding" }}
+      />
+      <AdminStack.Screen
+        name="AdminReports"
+        component={AdminReportsScreen}
+        options={{ title: "Reports" }}
       />
       <AdminStack.Screen
         name="Profile"
@@ -480,6 +574,65 @@ function AdminNavigator() {
   );
 }
 
+// ─── Agent Stack ───────────────────────────────────────────────────────────────
+
+const AgentStack = createStackNavigator<AgentStackParamList>();
+function AgentStackNavigator() {
+  return (
+    <AgentStack.Navigator
+      screenOptions={{ headerRight: () => <NotificationBell /> }}
+    >
+      <AgentStack.Screen
+        name="AgentDashboard"
+        component={AgentDashboardScreen}
+        options={{ headerShown: false }}
+      />
+      <AgentStack.Screen
+        name="AgentRegion"
+        component={AgentRegionScreen}
+        options={{ title: "Region Overview" }}
+      />
+      <AgentStack.Screen
+        name="AgentFarmers"
+        component={AgentFarmersScreen}
+        options={{ title: "Farmers" }}
+      />
+      <AgentStack.Screen
+        name="AgentOnboarding"
+        component={AgentOnboardingScreen}
+        options={{ title: "Onboarding" }}
+      />
+      <AgentStack.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{ title: "Messages" }}
+      />
+      <AgentStack.Screen
+        name="ChatDetail"
+        component={ChatDetailScreen}
+        options={({ route }) => ({
+          title: (route.params as any).participantName,
+        })}
+      />
+      <AgentStack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: "Profile" }}
+      />
+      <AgentStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: "Settings" }}
+      />
+      <AgentStack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: "Notifications" }}
+      />
+    </AgentStack.Navigator>
+  );
+}
+
 // ─── Root App Navigator ───────────────────────────────────────────────────────
 
 export default function AppNavigator() {
@@ -489,8 +642,10 @@ export default function AppNavigator() {
   if (role === "FARMER") return <FarmerNavigator />;
   if (role === "MERCHANT") return <MerchantNavigator />;
   if (role === "DELIVERY") return <DeliveryNavigator />;
-  if (role === "ADMIN" || role === "MANAGER" || role === "AGENT")
+  if (role === "ADMIN" || role === "MANAGER")
     return <AdminNavigator />;
+  if (role === "AGENT")
+    return <AgentStackNavigator />;
 
   return <NotAuthorizedScreen />;
 }

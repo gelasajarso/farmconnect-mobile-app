@@ -1,57 +1,66 @@
 {
-  "name": "farmconnect-mobile",
-  "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "test": "jest --watchAll=false"
-  },
-  "dependencies": {
-    "@babel/runtime": "^7.29.2",
-    "@expo/metro-runtime": "~3.2.3",
-    "@expo/vector-icons": "^15.1.1",
-    "@react-native-async-storage/async-storage": "^3.0.2",
-    "@react-native-masked-view/masked-view": "0.3.1",
-    "@react-navigation/bottom-tabs": "^6.5.20",
-    "@react-navigation/native": "^6.1.17",
-    "@react-navigation/stack": "^6.3.29",
-    "axios": "^1.7.2",
-    "expo": "~51.0.0",
-    "expo-image-picker": "^55.0.18",
-    "expo-location": "^55.1.8",
-    "expo-secure-store": "~13.0.0",
-    "expo-status-bar": "~1.12.1",
-    "graphql": "^15.10.2",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-native": "0.74.5",
-    "react-native-safe-area-context": "4.10.5",
-    "react-native-screens": "~3.31.1",
-    "react-native-web": "~0.19.10"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "@testing-library/jest-native": "^5.4.3",
-    "@testing-library/react-native": "12.4.2",
-    "@types/react": "~18.2.79",
-    "@types/react-native": "~0.73.0",
-    "babel-jest": "^29.7.0",
-    "fast-check": "^3.19.0",
-    "jest": "^29.7.0",
-    "jest-expo": "~51.0.0",
-    "typescript": "~5.3.3"
-  },
-  "jest": {
-    "preset": "jest-expo",
-    "setupFilesAfterFramework": [
-      "@testing-library/jest-native/extend-expect"
-    ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
-    ]
-  },
-  "private": true
+    "name": "farmconnect-mobile",
+    "version": "1.0.0",
+    "main": "node_modules/expo/AppEntry.js",
+    "scripts": {
+        "start": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 expo start",
+        "android": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 expo start --android",
+        "ios": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 expo start --ios",
+        "web": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 expo start --web",
+        "test": "jest --watchAll=false",
+        "start:secure": "expo start",
+        "android:secure": "expo start --android",
+        "ios:secure": "expo start --ios",
+        "web:secure": "expo start --web"
+    },
+    "dependencies": {
+        "@babel/runtime": "^7.29.2",
+        "@expo/metro-runtime": "~3.2.3",
+        "@expo/vector-icons": "^14.1.0",
+        "@react-native-async-storage/async-storage": "^3.0.2",
+        "@react-native-masked-view/masked-view": "0.3.1",
+        "@react-navigation/bottom-tabs": "^6.5.20",
+        "@react-navigation/native": "^6.1.17",
+        "@react-navigation/stack": "^6.3.29",
+        "axios": "^1.7.2",
+        "expo": "~51.0.0",
+        "expo-font": "~12.0.10",
+        "expo-image-picker": "~15.0.7",
+        "expo-location": "~17.0.1",
+        "expo-secure-store": "~13.0.0",
+        "expo-status-bar": "~1.12.1",
+        "expo-camera": "^15.0.0",
+        "graphql": "^15.10.2",
+        "react-native-maps": "1.18.0",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "react-native": "0.74.5",
+        "react-native-gesture-handler": "~2.16.1",
+        "react-native-safe-area-context": "4.10.5",
+        "react-native-screens": "~3.31.1",
+        "react-native-web": "~0.19.10"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.24.0",
+        "@testing-library/jest-native": "^5.4.3",
+        "@testing-library/react-native": "12.4.2",
+        "@types/react": "~18.2.79",
+        "@types/react-native": "~0.73.0",
+        "babel-jest": "^29.7.0",
+        "cross-env": "^7.0.3",
+        "fast-check": "^3.19.0",
+        "jest": "^29.7.0",
+        "jest-expo": "~51.0.0",
+        "typescript": "~5.3.3"
+    },
+    "jest": {
+        "preset": "jest-expo",
+        "setupFilesAfterEnv": [
+            "@testing-library/jest-native/extend-expect"
+        ],
+        "transformIgnorePatterns": [
+            "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+        ]
+    },
+    "private": true
 }

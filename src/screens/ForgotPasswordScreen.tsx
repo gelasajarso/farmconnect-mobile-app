@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import type { AuthStackParamList } from "../navigation/types";
 import { isValidEmail } from "../utils/validation";
-import { sendOtp, verifyOtp, resetPassword } from "../services/auth.service";
+import { sendOtp, verifyResetOtp, resetPassword } from "../services/auth.service";
 
 type NavProp = StackNavigationProp<AuthStackParamList, "ForgotPassword">;
 
@@ -77,7 +77,7 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      const res = await verifyOtp(email.trim(), otp.trim());
+      const res = await verifyResetOtp(email.trim(), otp.trim());
       setResetToken(res.token);
       setStep("reset");
     } catch (err: any) {

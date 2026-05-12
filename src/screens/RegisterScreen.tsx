@@ -15,9 +15,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import type { AuthStackParamList } from "../navigation/types";
-import type { UserRole } from "../types";
-import { mockSignup } from "../mock/mockServices";
+import { useAuth } from "../context/AuthContext";
 import { isValidEmail } from "../utils/validation";
+import { extractApiError } from "../utils/errorHandling";
 
 type NavProp = StackNavigationProp<AuthStackParamList, "Register">;
 
@@ -64,6 +64,7 @@ const ROLES: {
 
 export default function RegisterScreen() {
   const navigation = useNavigation<NavProp>();
+  const { signup } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -93,17 +94,29 @@ export default function RegisterScreen() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await mockSignup(name.trim(), email.trim(), password, role as UserRole);
-      Alert.alert(
-        "Account Created",
-        "Your account has been created. You can now sign in.",
-        [{ text: "Sign In", onPress: () => navigation.navigate("Login") }],
-      );
-    } catch (err: any) {
-      const status = err?.response?.status;
-      if (status === 409)
-        setApiError("An account with this email already exists.");
-      else setApiError("Something went wrong. Please try again.");
+      const response = await signup({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        role: (role as string).toLowerCase() as "farmer" | "merchant" | "delivery",
+        preferred_verification_method: "email",
+      });
+
+      if (response.requires_verification === true) {
+        navigation.navigate("OtpVerification", {
+          userId: response.user_id,
+          method: response.verification_method as "email" | "phone",
+          email: email.trim(),
+        });
+      } else {
+        Alert.alert(
+          "Account Created",
+          "Your account has been created. You can now sign in.",
+          [{ text: "Sign In", onPress: () => navigation.navigate("Login") }],
+        );
+      }
+    } catch (err: unknown) {
+      setApiError(extractApiError(err).message);
     } finally {
       setLoading(false);
     }

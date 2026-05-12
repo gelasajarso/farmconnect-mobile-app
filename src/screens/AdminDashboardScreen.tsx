@@ -121,6 +121,14 @@ export default function AdminDashboardScreen() {
             onPress={() => navigation.navigate('AdminDeliveries')}
           />
           <MenuRow
+            emoji="✅" label="Approval Queue" sub="Review pending registrations"
+            onPress={() => navigation.navigate('AdminApprovalQueue')}
+          />
+          <MenuRow
+            emoji="🚛" label="Delivery Assignment" sub="Assign carriers to orders"
+            onPress={() => navigation.navigate('AdminDeliveryAssign')}
+          />
+          <MenuRow
             emoji="🔔" label="Notifications" sub="View system notifications"
             onPress={() => navigation.navigate('Notifications')}
           />

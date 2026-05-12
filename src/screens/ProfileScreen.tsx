@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,13 @@ import {
   Platform,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { isValidEmail } from "../utils/validation";
+import {
+  getProfileSettings,
+  updateProfileSettings,
+  changePassword,
+  type ProfileSettings,
+} from "../services/profile.service";
+import { extractApiError } from "../utils/errorHandling";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 
@@ -44,80 +50,137 @@ const ROLE_EMOJI: Record<string, string> = {
   AGENT: "👤",
 };
 
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-function validateName(v: string): string {
-  const t = v.trim();
-  if (!t) return "Name is required.";
-  if (t.length < 2) return "Name must be at least 2 characters.";
-  if (t.length > 60) return "Name must be at most 60 characters.";
-  return "";
-}
-
-function validateEmail(v: string): string {
-  const t = v.trim();
-  if (!t) return "Email is required.";
-  if (!isValidEmail(t)) return "Enter a valid email address.";
-  return "";
-}
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout } = useAuth();
 
-  const roleColor = ROLE_COLORS[user?.role ?? ""] ?? "#424242";
-  const roleLabel = ROLE_LABELS[user?.role ?? ""] ?? user?.role ?? "User";
-  const roleEmoji = ROLE_EMOJI[user?.role ?? ""] ?? "👤";
-
-  const initials = (user?.name ?? "U")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  // ── Profile data state ──────────────────────────────────────────────────────
+  const [profile, setProfile] = useState<ProfileSettings | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // ── Edit state ──────────────────────────────────────────────────────────────
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [nameError, setNameError] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // ── Change password state ───────────────────────────────────────────────────
+  const [pwExpanded, setPwExpanded] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+  const [changingPw, setChangingPw] = useState(false);
+
+  // ── Derived display values ──────────────────────────────────────────────────
+  const displayedName =
+    profile?.display_name ?? profile?.name ?? user?.name ?? "User";
+  const role = profile?.role ?? user?.role ?? "";
+  const roleColor = ROLE_COLORS[role] ?? "#424242";
+  const roleLabel = ROLE_LABELS[role] ?? role ?? "User";
+  const roleEmoji = ROLE_EMOJI[role] ?? "👤";
+
+  const initials =
+    displayedName
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
+
+  // ── Load profile on mount ───────────────────────────────────────────────────
+  const loadProfile = useCallback(async () => {
+    setLoadingProfile(true);
+    setLoadError(null);
+    try {
+      const data = await getProfileSettings();
+      setProfile(data);
+    } catch (err) {
+      const { message } = extractApiError(err);
+      setLoadError(message);
+    } finally {
+      setLoadingProfile(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  // ── Edit handlers ───────────────────────────────────────────────────────────
   const startEdit = useCallback(() => {
-    setName(user?.name ?? "");
-    setEmail(user?.email ?? "");
-    setNameError("");
-    setEmailError("");
+    setDisplayName(profile?.display_name ?? "");
+    setUsername(profile?.username ?? "");
+    setBio(profile?.bio ?? "");
+    setSaveError(null);
     setEditing(true);
-  }, [user]);
+  }, [profile]);
 
   const cancelEdit = useCallback(() => {
     setEditing(false);
-    setNameError("");
-    setEmailError("");
+    setSaveError(null);
   }, []);
 
   async function handleSave() {
-    const ne = validateName(name);
-    const ee = validateEmail(email);
-    setNameError(ne);
-    setEmailError(ee);
-    if (ne || ee) return;
-
     setSaving(true);
+    setSaveError(null);
+    const prevProfile = profile;
     try {
-      await updateProfile({ name: name.trim(), email: email.trim() });
+      const updated = await updateProfileSettings({
+        display_name: displayName.trim() || undefined,
+        username: username.trim() || undefined,
+        bio: bio.trim() || undefined,
+      });
+      setProfile(updated);
       setEditing(false);
-      Alert.alert(
-        "Profile Updated",
-        "Your profile has been saved successfully.",
-      );
-    } catch {
-      Alert.alert("Error", "Failed to update profile. Please try again.");
+    } catch (err) {
+      const { message } = extractApiError(err);
+      setSaveError(message);
+      setProfile(prevProfile);
     } finally {
       setSaving(false);
+    }
+  }
+
+  // ── Change password handler ─────────────────────────────────────────────────
+  async function handleChangePassword() {
+    setPwError(null);
+    setPwSuccess(null);
+
+    if (!currentPassword) {
+      setPwError("Current password is required.");
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPwError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError("Passwords do not match.");
+      return;
+    }
+
+    setChangingPw(true);
+    try {
+      const result = await changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      setPwSuccess(result.message);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      const { message } = extractApiError(err);
+      setPwError(message);
+    } finally {
+      setChangingPw(false);
     }
   }
 
@@ -126,6 +189,34 @@ export default function ProfileScreen() {
       { text: "Cancel", style: "cancel" },
       { text: "Sign Out", style: "destructive", onPress: logout },
     ]);
+  }
+
+  // ── Loading state ───────────────────────────────────────────────────────────
+  if (loadingProfile) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#1A7A35" />
+          <Text style={styles.loadingText}>Loading profile…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Error state ─────────────────────────────────────────────────────────────
+  if (loadError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centered}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>Failed to load profile</Text>
+          <Text style={styles.errorMessage}>{loadError}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadProfile}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -145,7 +236,7 @@ export default function ProfileScreen() {
                 {initials}
               </Text>
             </View>
-            <Text style={styles.heroName}>{user?.name ?? "User"}</Text>
+            <Text style={styles.heroName}>{displayedName}</Text>
             <View style={styles.roleBadge}>
               <Text style={styles.roleBadgeText}>
                 {roleEmoji} {roleLabel}
@@ -172,10 +263,35 @@ export default function ProfileScreen() {
                 </View>
                 <InfoRow
                   icon="👤"
-                  label="Full Name"
-                  value={user?.name ?? "—"}
+                  label="Display Name"
+                  value={profile?.display_name ?? profile?.name ?? "—"}
                 />
-                <InfoRow icon="✉️" label="Email" value={user?.email ?? "—"} />
+                {profile?.username ? (
+                  <InfoRow
+                    icon="🔖"
+                    label="Username"
+                    value={`@${profile.username}`}
+                  />
+                ) : null}
+                {profile?.bio ? (
+                  <InfoRow icon="📝" label="Bio" value={profile.bio} />
+                ) : null}
+                <InfoRow
+                  icon="✉️"
+                  label="Email"
+                  value={
+                    profile?.email
+                      ? `${profile.email}${profile.email_verified ? " ✓" : ""}`
+                      : "—"
+                  }
+                />
+                {profile?.phone ? (
+                  <InfoRow
+                    icon="📱"
+                    label="Phone"
+                    value={`${profile.phone}${profile.phone_verified ? " ✓" : ""}`}
+                  />
+                ) : null}
                 <InfoRow icon="🏷️" label="Role" value={roleLabel} />
                 {user?.system_user_id && (
                   <InfoRow
@@ -184,15 +300,97 @@ export default function ProfileScreen() {
                     value={user.system_user_id}
                   />
                 )}
-                <InfoRow
-                  icon="🔑"
-                  label="Account ID"
-                  value={
-                    user?.keycloak_id
-                      ? `${user.keycloak_id.slice(0, 18)}…`
-                      : "—"
-                  }
-                />
+              </View>
+
+              {/* ── Change Password (collapsible) ── */}
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.sectionHeader}
+                  onPress={() => {
+                    setPwExpanded((v) => !v);
+                    setPwError(null);
+                    setPwSuccess(null);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.sectionTitle}>Change Password</Text>
+                  <Text style={styles.chevron}>
+                    {pwExpanded ? "▲" : "▼"}
+                  </Text>
+                </TouchableOpacity>
+
+                {pwExpanded && (
+                  <View style={styles.pwForm}>
+                    <View style={styles.fieldWrap}>
+                      <Text style={styles.fieldLabel}>Current Password</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={currentPassword}
+                        onChangeText={(t) => {
+                          setCurrentPassword(t);
+                          setPwError(null);
+                        }}
+                        placeholder="Enter current password"
+                        placeholderTextColor="#BDBDBD"
+                        secureTextEntry
+                        editable={!changingPw}
+                      />
+                    </View>
+                    <View style={styles.fieldWrap}>
+                      <Text style={styles.fieldLabel}>New Password</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={newPassword}
+                        onChangeText={(t) => {
+                          setNewPassword(t);
+                          setPwError(null);
+                        }}
+                        placeholder="At least 8 characters"
+                        placeholderTextColor="#BDBDBD"
+                        secureTextEntry
+                        editable={!changingPw}
+                      />
+                    </View>
+                    <View style={styles.fieldWrap}>
+                      <Text style={styles.fieldLabel}>Confirm New Password</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={confirmPassword}
+                        onChangeText={(t) => {
+                          setConfirmPassword(t);
+                          setPwError(null);
+                        }}
+                        placeholder="Repeat new password"
+                        placeholderTextColor="#BDBDBD"
+                        secureTextEntry
+                        editable={!changingPw}
+                      />
+                    </View>
+
+                    {pwError ? (
+                      <Text style={styles.fieldError}>{pwError}</Text>
+                    ) : null}
+                    {pwSuccess ? (
+                      <Text style={styles.successText}>{pwSuccess}</Text>
+                    ) : null}
+
+                    <TouchableOpacity
+                      style={[
+                        styles.saveBtn,
+                        changingPw && styles.saveBtnDisabled,
+                      ]}
+                      onPress={handleChangePassword}
+                      disabled={changingPw}
+                      activeOpacity={0.85}
+                    >
+                      {changingPw ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.saveBtnText}>Update Password</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
 
               <View style={styles.section}>
@@ -213,53 +411,72 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>Edit Profile</Text>
 
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Full Name</Text>
+                <Text style={styles.fieldLabel}>Display Name</Text>
                 <TextInput
-                  style={[styles.input, nameError ? styles.inputError : null]}
-                  value={name}
+                  style={styles.input}
+                  value={displayName}
                   onChangeText={(t) => {
-                    setName(t);
-                    setNameError("");
+                    setDisplayName(t);
+                    setSaveError(null);
                   }}
-                  placeholder="Your full name"
+                  placeholder="Your display name"
                   placeholderTextColor="#BDBDBD"
                   editable={!saving}
                   autoCapitalize="words"
                 />
-                {nameError ? (
-                  <Text style={styles.fieldError}>{nameError}</Text>
-                ) : null}
               </View>
 
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Email Address</Text>
+                <Text style={styles.fieldLabel}>Username</Text>
                 <TextInput
-                  style={[styles.input, emailError ? styles.inputError : null]}
-                  value={email}
+                  style={styles.input}
+                  value={username}
                   onChangeText={(t) => {
-                    setEmail(t);
-                    setEmailError("");
+                    setUsername(t);
+                    setSaveError(null);
                   }}
-                  placeholder="you@example.com"
+                  placeholder="e.g. johnmwangi"
                   placeholderTextColor="#BDBDBD"
                   editable={!saving}
                   autoCapitalize="none"
-                  keyboardType="email-address"
                 />
-                {emailError ? (
-                  <Text style={styles.fieldError}>{emailError}</Text>
-                ) : null}
+              </View>
+
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>Bio</Text>
+                <TextInput
+                  style={[styles.input, styles.bioInput]}
+                  value={bio}
+                  onChangeText={(t) => {
+                    setBio(t);
+                    setSaveError(null);
+                  }}
+                  placeholder="Tell us about yourself"
+                  placeholderTextColor="#BDBDBD"
+                  editable={!saving}
+                  multiline
+                  numberOfLines={3}
+                />
               </View>
 
               {/* Read-only fields */}
-              <InfoRow icon="🏷️" label="Role" value={roleLabel} />
-              {user?.system_user_id && (
-                <InfoRow
-                  icon="🆔"
-                  label="User ID"
-                  value={user.system_user_id}
-                />
-              )}
+              <InfoRow
+                icon="✉️"
+                label="Email"
+                value={profile?.email ?? "—"}
+              />
+              <InfoRow
+                icon="📱"
+                label="Phone"
+                value={profile?.phone ?? "—"}
+              />
+              <Text style={styles.readOnlyNote}>
+                Email and phone changes require OTP verification.
+              </Text>
+
+              {saveError ? (
+                <Text style={styles.fieldError}>{saveError}</Text>
+              ) : null}
 
               {/* Buttons */}
               <View style={styles.editActions}>
@@ -347,6 +564,35 @@ function ActionRow({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#F7F9F7" },
 
+  // Centered states (loading / error)
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  loadingText: { marginTop: 12, fontSize: 14, color: "#757575" },
+  errorIcon: { fontSize: 40, marginBottom: 12 },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0D1B0F",
+    marginBottom: 6,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: "#757575",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryBtn: {
+    backgroundColor: "#1A7A35",
+    borderRadius: 10,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+  },
+  retryBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+
   // Hero
   hero: {
     alignItems: "center",
@@ -417,6 +663,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 6,
   },
+  chevron: { fontSize: 14, color: "#9E9E9E", paddingTop: 14 },
   editBtn: {
     backgroundColor: "#F0FBF3",
     borderRadius: 20,
@@ -441,7 +688,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#0D1B0F",
     fontWeight: "600",
-    maxWidth: "50%",
+    maxWidth: "55%",
     textAlign: "right",
   },
 
@@ -459,6 +706,7 @@ const styles = StyleSheet.create({
   actionChevron: { fontSize: 20, color: "#BDBDBD" },
 
   // Edit form
+  pwForm: { paddingBottom: 16 },
   fieldWrap: { marginBottom: 4, paddingTop: 10 },
   fieldLabel: {
     fontSize: 12,
@@ -479,12 +727,30 @@ const styles = StyleSheet.create({
     color: "#0D1B0F",
     fontWeight: "500",
   },
-  inputError: { borderColor: "#B71C1C", backgroundColor: "#FFF8F8" },
+  bioInput: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
   fieldError: {
     fontSize: 12,
     color: "#B71C1C",
     marginTop: 4,
     fontWeight: "500",
+    paddingBottom: 8,
+  },
+  successText: {
+    fontSize: 13,
+    color: "#1A7A35",
+    marginTop: 4,
+    fontWeight: "600",
+    paddingBottom: 8,
+  },
+  readOnlyNote: {
+    fontSize: 12,
+    color: "#9E9E9E",
+    marginTop: 6,
+    marginBottom: 4,
+    fontStyle: "italic",
   },
 
   editActions: { paddingVertical: 16, gap: 10 },
@@ -498,6 +764,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+    marginTop: 8,
   },
   saveBtnDisabled: {
     backgroundColor: "#A5D6A7",

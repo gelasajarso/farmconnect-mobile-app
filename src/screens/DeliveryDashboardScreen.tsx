@@ -1,15 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import * as Location from 'expo-location';
 import { useAuth } from '../context/AuthContext';
 import { useDeliveries } from '../hooks/useDeliveries';
 import { DELIVERY_STATUS_LABELS } from '../utils/enumLabels';
 import type { DeliveryStackParamList } from '../navigation/types';
 import type { DeliveryResponse, DeliveryStatus } from '../types';
+import {
+  getAvailability,
+  setAvailability,
+  type AvailabilityStatus,
+} from '../services/carrier.service';
+import { updateMyLocation } from '../services/location.service';
 
 type DashNavProp = StackNavigationProp<DeliveryStackParamList, 'DeliveryDashboard'>;
 
@@ -18,10 +25,66 @@ const STATUS_COLORS: Record<DeliveryStatus, string> = {
   DELIVERED: '#1A7A35', FAILED: '#B71C1C', CANCELLED: '#757575',
 };
 
+const AVAILABILITY_OPTIONS: { status: AvailabilityStatus; label: string; color: string; bg: string; activeBg: string }[] = [
+  { status: 'AVAILABLE',   label: 'Available',   color: '#1A7A35', bg: '#F0FBF3', activeBg: '#1A7A35' },
+  { status: 'ON_BREAK',    label: 'On Break',    color: '#E65100', bg: '#FFF3E0', activeBg: '#E65100' },
+  { status: 'UNAVAILABLE', label: 'Unavailable', color: '#757575', bg: '#F5F5F5', activeBg: '#757575' },
+];
+
 export default function DeliveryDashboardScreen() {
   const navigation = useNavigation<DashNavProp>();
   const { user, logout } = useAuth();
   const { deliveries, loading, error, refetch } = useDeliveries();
+
+  const [availability, setAvailabilityState] = useState<AvailabilityStatus | null>(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [locationWarning, setLocationWarning] = useState('');
+
+  // Load availability on mount — silently, don't block the screen
+  useEffect(() => {
+    getAvailability()
+      .then(status => setAvailabilityState(status))
+      .catch(() => { /* silent */ });
+  }, []);
+
+  const handleAvailabilityChange = useCallback(async (newStatus: AvailabilityStatus) => {
+    if (availabilityLoading || newStatus === availability) return;
+
+    const previous = availability;
+    setAvailabilityLoading(true);
+    setAvailabilityError('');
+    setLocationWarning('');
+
+    try {
+      const updated = await setAvailability(newStatus);
+      setAvailabilityState(updated);
+
+      // If switching to AVAILABLE, try to update location (non-blocking)
+      if (newStatus === 'AVAILABLE') {
+        try {
+          const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
+          if (permStatus === 'granted') {
+            const pos = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            try {
+              await updateMyLocation(pos.coords.latitude, pos.coords.longitude);
+            } catch {
+              setLocationWarning('Location update failed, but availability was set.');
+            }
+          }
+        } catch {
+          // Location errors are non-blocking — availability already set
+        }
+      }
+    } catch (e: any) {
+      setAvailabilityState(previous);
+      setAvailabilityError(e?.message ?? 'Failed to update availability. Please try again.');
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  }, [availability, availabilityLoading]);
 
   const stats = useMemo(() => ({
     total:     deliveries.length,
@@ -29,8 +92,6 @@ export default function DeliveryDashboardScreen() {
     delivered: deliveries.filter(d => d.status === 'DELIVERED').length,
     failed:    deliveries.filter(d => d.status === 'FAILED').length,
   }), [deliveries]);
-
-  const initials = (user?.name ?? 'D').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -56,13 +117,59 @@ export default function DeliveryDashboardScreen() {
           <StatCard label="Failed"    value={stats.failed}    color="#B71C1C" bg="#FFEBEE" loading={loading} />
         </View>
 
+        {/* Availability Section */}
+        <SectionHeader title="My Availability" />
+        <View style={styles.availabilityCard}>
+          {availabilityLoading ? (
+            <View style={styles.availabilityLoading}>
+              <ActivityIndicator color="#1A7A35" />
+              <Text style={styles.availabilityLoadingText}>Updating…</Text>
+            </View>
+          ) : (
+            <View style={styles.availabilityButtons}>
+              {AVAILABILITY_OPTIONS.map(opt => {
+                const isActive = availability === opt.status;
+                return (
+                  <TouchableOpacity
+                    key={opt.status}
+                    style={[
+                      styles.availabilityBtn,
+                      isActive
+                        ? { backgroundColor: opt.activeBg }
+                        : { backgroundColor: opt.bg },
+                    ]}
+                    onPress={() => handleAvailabilityChange(opt.status)}
+                    disabled={availabilityLoading}
+                    activeOpacity={0.75}
+                  >
+                    <Text
+                      style={[
+                        styles.availabilityBtnText,
+                        isActive ? { color: '#fff' } : { color: opt.color },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+          {!!availabilityError && (
+            <Text style={styles.availabilityError}>{availabilityError}</Text>
+          )}
+          {!!locationWarning && !availabilityError && (
+            <Text style={styles.locationWarning}>{locationWarning}</Text>
+          )}
+        </View>
+
         {/* Quick Actions */}
         <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
-          <ActionCard emoji="📋" label="Assignments"  onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
-          <ActionCard emoji="🗺️" label="Active Routes" onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
-          <ActionCard emoji="🛒" label="Marketplace"  onPress={() => navigation.getParent()?.navigate('HomeStack')} />
-          <ActionCard emoji="👤" label="Profile"      onPress={() => navigation.navigate('Profile')} />
+          <ActionCard emoji="📋" label="Assignments"      onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
+          <ActionCard emoji="🗺️" label="Active Routes"   onPress={() => navigation.navigate('DeliveryAssignmentsList')} />
+          <ActionCard emoji="📦" label="Available Orders" onPress={() => navigation.navigate('AvailableOrders')} />
+          <ActionCard emoji="👤" label="Profile"          onPress={() => navigation.navigate('Profile')} />
         </View>
 
         {/* Recent Assignments */}
@@ -167,6 +274,49 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#0D1B0F', letterSpacing: -0.2 },
   seeAll: { fontSize: 13, color: '#1A7A35', fontWeight: '600' },
+
+  // Availability
+  availabilityCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginHorizontal: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  availabilityLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 10,
+  },
+  availabilityLoadingText: { fontSize: 13, color: '#9E9E9E' },
+  availabilityButtons: { flexDirection: 'row', gap: 8 },
+  availabilityBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  availabilityBtnText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
+  availabilityError: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#B71C1C',
+    textAlign: 'center',
+  },
+  locationWarning: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#E65100',
+    textAlign: 'center',
+  },
 
   actionsRow: { flexDirection: 'row', marginHorizontal: 16, gap: 10 },
   actionCard: {

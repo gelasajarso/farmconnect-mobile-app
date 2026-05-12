@@ -105,8 +105,8 @@ export default function EditProductScreen() {
   const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<string[]>([]);
   const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
   } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -451,19 +451,19 @@ export default function EditProductScreen() {
         {/* Location */}
         <Text style={styles.label}>Product Location</Text>
         <TouchableOpacity
-          style={[styles.locationBtn, location && styles.locationBtnSet]}
+          style={[styles.locationBtn, typeof location?.latitude === 'number' && styles.locationBtnSet]}
           onPress={pickLocation}
           disabled={saving}
         >
           <MaterialIcons
-            name={location ? "location-on" : "location-off"}
+            name={typeof location?.latitude === 'number' ? "location-on" : "location-off"}
             size={20}
-            color={location ? G.primary : G.sub}
+            color={typeof location?.latitude === 'number' ? G.primary : G.sub}
           />
           <Text
-            style={[styles.locationText, location && styles.locationTextSet]}
+            style={[styles.locationText, typeof location?.latitude === 'number' && styles.locationTextSet]}
           >
-            {location
+            {typeof location?.latitude === 'number' && typeof location?.longitude === 'number'
               ? `Location set (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
               : "Set product location (optional)"}
           </Text>

@@ -8,12 +8,12 @@ import type {
 } from "../types";
 
 export async function login(
-  email: string,
+  emailOrPhone: string,
   password: string,
 ): Promise<LoginResponse> {
-  if (USE_MOCK) return mockLogin(email, password);
+  if (USE_MOCK) return mockLogin(emailOrPhone, password);
   const { data } = await api.post<LoginResponse>("/auth/login", {
-    email,
+    email_or_phone: emailOrPhone,
     password,
   });
   return data;
@@ -43,7 +43,7 @@ export async function sendOtp(email: string): Promise<{ message: string }> {
   return data;
 }
 
-export async function verifyOtp(
+export async function verifyResetOtp(
   email: string,
   otp: string,
 ): Promise<{ token: string }> {
@@ -72,5 +72,75 @@ export async function resetPassword(
     token,
     newPassword,
   });
+  return data;
+}
+
+// ─── Signup & OTP Verification ────────────────────────────────────────────────
+
+export interface SignupPayload {
+  name: string;
+  email?: string;
+  phone?: string;
+  password: string;
+  role: "farmer" | "merchant" | "delivery";
+  preferred_verification_method: "email" | "phone";
+}
+
+export interface SignupResponse {
+  user_id: string;
+  email: string;
+  role: string;
+  onboarding_status: string;
+  requires_verification: boolean;
+  verification_method: string;
+  message: string;
+}
+
+export interface VerifyOtpPayload {
+  user_id: string;
+  code: string;
+  method: string;
+}
+
+export async function signup(payload: SignupPayload): Promise<SignupResponse> {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 800));
+    return {
+      user_id: "mock-user-id",
+      email: payload.email ?? "",
+      role: payload.role,
+      onboarding_status: "PENDING_VERIFICATION",
+      requires_verification: true,
+      verification_method: payload.preferred_verification_method,
+      message: "Account created. Please verify your account.",
+    };
+  }
+  const { data } = await api.post<SignupResponse>("/auth/signup", payload);
+  return data;
+}
+
+export async function verifyOtp(
+  payload: VerifyOtpPayload,
+): Promise<LoginResponse> {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 500));
+    return mockLogin("mock@example.com", "password");
+  }
+  const { data } = await api.post<LoginResponse>("/auth/verify", payload);
+  return data;
+}
+
+export async function resendOtp(
+  userId: string,
+  method: string,
+): Promise<{ message: string }> {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 500));
+    return { message: "OTP resent successfully" };
+  }
+  const { data } = await api.post<{ message: string }>(
+    "/users/verify/resend",
+    { user_id: userId, method },
+  );
   return data;
 }
